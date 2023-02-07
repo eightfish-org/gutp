@@ -1,3 +1,3 @@
 # GUTP
 
-A General User Text Persistance protocol.
+A General User Text Persistence protocol.
