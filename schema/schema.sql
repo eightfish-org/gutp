@@ -1,7 +1,7 @@
 -- The basic gutp user model
 CREATE TABLE gutpuser (
   id varchar primary key,		-- for machine read
-  account varchar unique not null,	-- for human read
+  account varchar not null,	-- for human read
   nickname varchar not null,
   avatar varchar not null,		-- user's avatar, usually an url link to outside
   role smallint not null,
@@ -11,6 +11,11 @@ CREATE TABLE gutpuser (
   ext varchar not null
 );
 
+CREATE TABLE gutpuser_idhash (
+  id varchar primary key,		
+  hash varchar not null
+);
+
 -- The abstract of subforum, blogspace, personal space, etc.
 CREATE TABLE subspace (
   id varchar primary key,		
@@ -18,9 +23,14 @@ CREATE TABLE subspace (
   description varchar not null,
   banner varchar not null,
   owner varchar not null,		-- who own this subspace
-  created_time bigint not null,
   status smallint not null,
   weight smallint not null		-- used for ranks
+  created_time bigint not null,
+);
+
+CREATE TABLE subspace_idhash (
+  id varchar primary key,		
+  hash varchar not null
 );
 
 CREATE TABLE post (
@@ -36,6 +46,11 @@ CREATE TABLE post (
   updated_time bigint not null
 );
 
+CREATE TABLE post_idhash (
+  id varchar primary key,		
+  hash varchar not null
+);
+
 CREATE TABLE comment (
   id varchar primary key,
   content varchar not null,
@@ -43,6 +58,11 @@ CREATE TABLE comment (
   author_id varchar not null,
   status smallint not null,
   created_time bigint not null
+);
+
+CREATE TABLE comment_idhash (
+  id varchar primary key,		
+  hash varchar not null
 );
 
 CREATE TABLE tag (
@@ -54,8 +74,12 @@ CREATE TABLE tag (
   created_time bigint not null
 );
 
+CREATE TABLE tag_idhash (
+  id varchar primary key,		
+  hash varchar not null
+);
+
 CREATE TABLE posttag (
   post_id varchar primary key,
   tag_id varchar not null
 );
-
