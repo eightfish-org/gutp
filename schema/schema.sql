@@ -23,6 +23,7 @@ CREATE TABLE subspace (
   description varchar not null,
   banner varchar not null,
   owner varchar not null,		-- who own this subspace
+  profession varchar not null,
   status smallint not null,
   weight smallint not null		-- used for ranks
   created_time bigint not null,
@@ -40,6 +41,7 @@ CREATE TABLE post (
   author_id varchar not null,
   subspace_id varchar not null,		-- a post belongs to a subspace
   extlink varchar not null,
+  profession varchar not null,
   status smallint not null,
   weight smallint not null		-- used for ranks
   created_time bigint not null,
