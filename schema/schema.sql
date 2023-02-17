@@ -1,3 +1,6 @@
+---------------------------------
+---------  Content Part ----------
+
 -- The basic gutp user model
 CREATE TABLE gutpuser (
   id varchar primary key,		-- for machine read
@@ -82,6 +85,49 @@ CREATE TABLE tag_idhash (
 );
 
 CREATE TABLE posttag (
-  post_id varchar primary key,
-  tag_id varchar not null
+  id varchar primary key,		-- the post id
+  tag_id varchar not null		-- the tag id
 );
+
+CREATE TABLE posttag_idhash (
+  id varchar primary key,		
+  hash varchar not null
+);
+
+---------------------------------
+---------  Social Part ----------
+
+CREATE TABLE likeit (
+  id varchar primary key,		-- target id
+  ttype varchar not null,		-- target type
+  user_id: varchar not null		-- who do it
+);
+
+CREATE TABLE likeit_idhash (
+  id varchar primary key,		
+  hash varchar not null
+);
+
+CREATE TABLE reward (
+  id varchar primary key,		-- target id
+  ttype varchar not null,		-- target type
+  user_id: varchar not null,		-- who do it
+  amount: int not null			-- the reward amount
+);
+
+CREATE TABLE reward_idhash (
+  id varchar primary key,		
+  hash varchar not null
+);
+
+CREATE TABLE follow (
+  id varchar primary key,		-- target user id
+  user_id: varchar not null,		-- who follows the target
+  time: bigint not null			-- the followed time
+);
+
+CREATE TABLE follow_idhash (
+  id varchar primary key,		
+  hash varchar not null
+);
+
