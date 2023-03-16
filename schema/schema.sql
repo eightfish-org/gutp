@@ -1,16 +1,16 @@
----------------------------------
+----------------------------------
 ---------  Content Part ----------
 
 -- The basic gutp user model
 CREATE TABLE gutpuser (
   id varchar primary key,		-- for machine read
-  account varchar not null,	-- for human read
+  account varchar not null,	    -- for human read
   nickname varchar not null,
   avatar varchar not null,		-- user's avatar, usually an url link to outside
   role smallint not null,
   status smallint not null,
   signup_time bigint not null,
-  publickey varchar not null,		-- for decentralized account
+  publickey varchar not null,	-- for decentralized account
   ext varchar not null
 );
 
@@ -20,7 +20,7 @@ CREATE TABLE gutpuser_idhash (
 );
 
 -- The abstract of subforum, blogspace, personal space, etc.
-CREATE TABLE subspace (
+CREATE TABLE gutpsubspace (
   id varchar primary key,		
   title varchar not null,
   description varchar not null,
@@ -32,12 +32,12 @@ CREATE TABLE subspace (
   created_time bigint not null,
 );
 
-CREATE TABLE subspace_idhash (
+CREATE TABLE gutpsubspace_idhash (
   id varchar primary key,		
   hash varchar not null
 );
 
-CREATE TABLE post (
+CREATE TABLE gutppost (
   id varchar primary key,
   title varchar not null,
   content varchar not null,
@@ -51,12 +51,12 @@ CREATE TABLE post (
   updated_time bigint not null
 );
 
-CREATE TABLE post_idhash (
+CREATE TABLE gutppost_idhash (
   id varchar primary key,		
   hash varchar not null
 );
 
-CREATE TABLE comment (
+CREATE TABLE gutpcomment (
   id varchar primary key,
   content varchar not null,
   post_id varchar not null,
@@ -65,12 +65,12 @@ CREATE TABLE comment (
   created_time bigint not null
 );
 
-CREATE TABLE comment_idhash (
+CREATE TABLE gutpcomment_idhash (
   id varchar primary key,		
   hash varchar not null
 );
 
-CREATE TABLE tag (
+CREATE TABLE gutptag (
   id varchar primary key,
   caption varchar not null,
   subspace_id varchar not null,		-- a tag belongs to a subspace
@@ -79,17 +79,17 @@ CREATE TABLE tag (
   created_time bigint not null
 );
 
-CREATE TABLE tag_idhash (
+CREATE TABLE gutptag_idhash (
   id varchar primary key,		
   hash varchar not null
 );
 
-CREATE TABLE posttag (
+CREATE TABLE gutpposttag (
   id varchar primary key,		-- the post id
   tag_id varchar not null		-- the tag id
 );
 
-CREATE TABLE posttag_idhash (
+CREATE TABLE gutpposttag_idhash (
   id varchar primary key,		
   hash varchar not null
 );
@@ -97,36 +97,36 @@ CREATE TABLE posttag_idhash (
 ---------------------------------
 ---------  Social Part ----------
 
-CREATE TABLE likeit (
+CREATE TABLE gutplikeit (
   id varchar primary key,		-- target id
   ttype varchar not null,		-- target type
   user_id: varchar not null		-- who do it
 );
 
-CREATE TABLE likeit_idhash (
+CREATE TABLE gutplikeit_idhash (
   id varchar primary key,		
   hash varchar not null
 );
 
-CREATE TABLE reward (
+CREATE TABLE gutpreward (
   id varchar primary key,		-- target id
   ttype varchar not null,		-- target type
-  user_id: varchar not null,		-- who do it
+  user_id: varchar not null,	-- who do it
   amount: int not null			-- the reward amount
 );
 
-CREATE TABLE reward_idhash (
+CREATE TABLE gutpreward_idhash (
   id varchar primary key,		
   hash varchar not null
 );
 
-CREATE TABLE follow (
+CREATE TABLE gutpfollow (
   id varchar primary key,		-- target user id
-  user_id: varchar not null,		-- who follows the target
+  user_id: varchar not null,	-- who follows the target
   time: bigint not null			-- the followed time
 );
 
-CREATE TABLE follow_idhash (
+CREATE TABLE gutpfollow_idhash (
   id varchar primary key,		
   hash varchar not null
 );
