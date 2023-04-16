@@ -10,7 +10,6 @@ CREATE TABLE gutpuser (
   role smallint not null,           -- permission model
   status smallint not null,
   signup_time bigint not null,
-  publickey varchar not null,	    -- for decentralized account
   ext varchar not null              -- for certain extension
 );
 
@@ -28,6 +27,7 @@ CREATE TABLE gutpsubspace (
   owner varchar not null,		    -- who ownes this subspace
   profession varchar not null,      -- which profession this subspace belongs to
   appid varchar not null,           -- which app/platform this subspace belongs to 
+  private boolean not null,         -- is this subspace private
   status smallint not null,
   weight smallint not null		    -- used for ranks
   created_time bigint not null,
@@ -47,6 +47,7 @@ CREATE TABLE gutppost (
   extlink varchar not null,
   profession varchar not null,      -- which profession this subspace belongs to
   appid varchar not null,           -- which app/platform this subspace belongs to
+  private boolean not null,         -- is this post private
   status smallint not null,
   weight smallint not null		    -- used for ranks
   created_time bigint not null,
@@ -64,6 +65,7 @@ CREATE TABLE gutpcomment (
   author_id varchar not null,
   post_id varchar not null,         -- the post this comment belongs to
   rcomment_id varchar not null,     -- the replied comment id, if has
+  private boolean not null,         -- is this comment private
   status smallint not null,
   created_time bigint not null
 );
@@ -79,6 +81,7 @@ CREATE TABLE gutptag (
   subspace_id varchar not null,		  -- which subspace a tag belongs to
   creator_id varchar not null,
   kind smallint not null,		      -- system level tag, or customized tag
+  private boolean not null,           -- is this tag private
   created_time bigint not null
 );
 
@@ -135,3 +138,17 @@ CREATE TABLE gutpfollow_idhash (
   hash varchar not null
 );
 
+
+---------------------------------
+---------  Private Part ---------
+CREATE TABLE gutpuserprofile (
+  id varchar primary key,		    
+  bio varchar not null,	        
+  settings varchar not null,
+  ext varchar not null,
+);
+
+CREATE TABLE gutppublickey (
+  id varchar primary key,           -- user id		    
+  publickey varchar not null,	    -- if needed, for decentralized account
+);
