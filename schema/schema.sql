@@ -64,7 +64,7 @@ CREATE TABLE gutpcomment (
   content varchar not null,
   author_id varchar not null,
   post_id varchar not null,         -- the post this comment belongs to
-  reply_id varchar not null,     -- the replied comment id, if has
+  parent_comment_id varchar not null,     -- the replied comment id, if has
   private boolean not null,         -- is this comment private
   status smallint not null,
   created_time bigint not null
@@ -92,7 +92,7 @@ CREATE TABLE gutptag_idhash (
 
 -- The M:N index mapping table
 CREATE TABLE gutpposttag (
-  post_id varchar primary key,		-- the post id
+  id varchar not null,		-- the post id
   tag_id varchar not null		-- the tag id
 );
 
@@ -119,7 +119,7 @@ CREATE TABLE gutpreward (
   target_id varchar primary key,		-- target id
   target_type varchar not null,		-- target type
   user_id varchar not null,	-- who do it
-  amount double precision not null			-- the reward amount
+  amount int not null			-- the reward amount
 );
 
 CREATE TABLE gutpreward_idhash (
