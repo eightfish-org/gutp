@@ -29,7 +29,7 @@ CREATE TABLE gutpsubspace (
   appid varchar not null,           -- which app/platform this subspace belongs to 
   private boolean not null,         -- is this subspace private
   status smallint not null,
-  weight smallint not null		    -- used for ranks
+  weight smallint not null,		    -- used for ranks
   created_time bigint not null,
 );
 
@@ -49,7 +49,7 @@ CREATE TABLE gutppost (
   appid varchar not null,           -- which app/platform this subspace belongs to
   private boolean not null,         -- is this post private
   status smallint not null,
-  weight smallint not null		    -- used for ranks
+  weight smallint not null,		    -- used for ranks
   created_time bigint not null,
   updated_time bigint not null
 );
@@ -64,7 +64,7 @@ CREATE TABLE gutpcomment (
   content varchar not null,
   author_id varchar not null,
   post_id varchar not null,         -- the post this comment belongs to
-  rcomment_id varchar not null,     -- the replied comment id, if has
+  parent_comment_id varchar not null,     -- the replied comment id, if has
   private boolean not null,         -- is this comment private
   status smallint not null,
   created_time bigint not null
@@ -86,13 +86,13 @@ CREATE TABLE gutptag (
 );
 
 CREATE TABLE gutptag_idhash (
-  id varchar primary key,		
+  id varchar primary key,
   hash varchar not null
 );
 
 -- The M:N index mapping table
 CREATE TABLE gutpposttag (
-  id varchar primary key,		-- the post id
+  id varchar not null,		-- the post id
   tag_id varchar not null		-- the tag id
 );
 
@@ -105,9 +105,9 @@ CREATE TABLE gutpposttag_idhash (
 ---------  Social Part ----------
 
 CREATE TABLE gutplikeit (
-  id varchar primary key,		-- target id
-  ttype varchar not null,		-- target type
-  user_id: varchar not null		-- who does it
+  id varchar not null,		-- target id
+  target_type varchar not null,		-- target type
+  user_id varchar not null		-- who does it
 );
 
 CREATE TABLE gutplikeit_idhash (
@@ -116,10 +116,10 @@ CREATE TABLE gutplikeit_idhash (
 );
 
 CREATE TABLE gutpreward (
-  id varchar primary key,		-- target id
-  ttype varchar not null,		-- target type
-  user_id: varchar not null,	-- who do it
-  amount: int not null			-- the reward amount
+  id varchar not null,		-- target id
+  target_type varchar not null,		-- target type
+  user_id varchar not null,	-- who do it
+  amount int not null			-- the reward amount
 );
 
 CREATE TABLE gutpreward_idhash (
@@ -128,9 +128,9 @@ CREATE TABLE gutpreward_idhash (
 );
 
 CREATE TABLE gutpfollow (
-  id varchar primary key,		-- target user id
-  user_id: varchar not null,	-- who follows the target
-  time: bigint not null			-- the followed time
+  id varchar not null,		-- target user id
+  follower_id varchar not null,	-- who follows the target
+  time bigint not null			-- the followed time
 );
 
 CREATE TABLE gutpfollow_idhash (
@@ -143,12 +143,12 @@ CREATE TABLE gutpfollow_idhash (
 ---------  Private Part ---------
 CREATE TABLE gutpuserprofile (
   id varchar primary key,		    
-  bio varchar not null,	        
+  bio varchar not null,
   settings varchar not null,
-  ext varchar not null,
+  ext varchar not null
 );
 
 CREATE TABLE gutppublickey (
   id varchar primary key,           -- user id		    
-  publickey varchar not null,	    -- if needed, for decentralized account
+  publickey varchar not null	    -- if needed, for decentralized account
 );
