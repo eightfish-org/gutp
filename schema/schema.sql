@@ -105,7 +105,7 @@ CREATE TABLE gutpposttag_idhash (
 ---------  Social Part ----------
 
 CREATE TABLE gutplikeit (
-  target_id varchar primary key,		-- target id
+  id varchar not null,		-- target id
   target_type varchar not null,		-- target type
   user_id varchar not null		-- who does it
 );
@@ -116,7 +116,7 @@ CREATE TABLE gutplikeit_idhash (
 );
 
 CREATE TABLE gutpreward (
-  target_id varchar primary key,		-- target id
+  id varchar not null,		-- target id
   target_type varchar not null,		-- target type
   user_id varchar not null,	-- who do it
   amount int not null			-- the reward amount
@@ -128,7 +128,7 @@ CREATE TABLE gutpreward_idhash (
 );
 
 CREATE TABLE gutpfollow (
-  user_id varchar primary key,		-- target user id
+  id varchar not null,		-- target user id
   follower_id varchar not null,	-- who follows the target
   time bigint not null			-- the followed time
 );
@@ -143,7 +143,7 @@ CREATE TABLE gutpfollow_idhash (
 ---------  Private Part ---------
 CREATE TABLE gutpuserprofile (
   id varchar primary key,		    
-  bio varchar not null,	        
+  bio varchar not null,
   settings varchar not null,
   ext varchar not null
 );
