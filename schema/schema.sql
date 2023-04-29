@@ -10,7 +10,7 @@ CREATE TABLE gutpuser (
   role smallint not null,           -- permission model
   status smallint not null,
   signup_time bigint not null,
-  ext varchar not null              -- for certain extension
+  ext varchar not null              -- for certain extension, is very important to extensive app, you could place a json in it
 );
 
 CREATE TABLE gutpuser_idhash (
@@ -80,7 +80,7 @@ CREATE TABLE gutptag (
   caption varchar not null,
   subspace_id varchar not null,		  -- which subspace a tag belongs to
   creator_id varchar not null,
-  kind smallint not null,		      -- system level tag, or customized tag
+  weight smallint not null,		      -- weight for system level tag, or customized tag
   private boolean not null,           -- is this tag private
   created_time bigint not null
 );
@@ -92,12 +92,27 @@ CREATE TABLE gutptag_idhash (
 
 -- The M:N index mapping table
 CREATE TABLE gutpposttag (
-  id varchar not null,		-- the post id
+  id varchar primary key,       -- we need this field for the relationship between post_id and tag_id is M:N
+  post_id varchar not null,		-- the post id
   tag_id varchar not null		-- the tag id
 );
 
 CREATE TABLE gutpposttag_idhash (
-  id varchar primary key,		
+  id varchar primary key,		-- this idhash pair requires the id field must be unique
+  hash varchar not null
+);
+
+CREATE TABLE gutpcollabor (
+  id varchar primary key,
+  user_id varchar not null,
+  subspace_id varchar not null,
+  space_collabor boolean not null,    -- is this a space collaborator
+  tag_id varchar not null,            -- is space_collabor is false, this field could have value
+  permission_level smallint not null   -- levels
+);
+
+CREATE TABLE gutpcollabor_idhash (
+  id varchar primary key,		-- this idhash pair requires the id field must be unique
   hash varchar not null
 );
 
@@ -119,7 +134,7 @@ CREATE TABLE gutpreward (
   id varchar not null,		-- target id
   target_type varchar not null,		-- target type
   user_id varchar not null,	-- who do it
-  amount int not null			-- the reward amount
+  amount bigint not null			-- the reward amount
 );
 
 CREATE TABLE gutpreward_idhash (
@@ -148,7 +163,17 @@ CREATE TABLE gutpuserprofile (
   ext varchar not null
 );
 
+CREATE TABLE gutpuserprofile_idhash (
+  id varchar primary key,		
+  hash varchar not null
+);
+
 CREATE TABLE gutppublickey (
   id varchar primary key,           -- user id		    
   publickey varchar not null	    -- if needed, for decentralized account
+);
+
+CREATE TABLE gutppublickey_idhash (
+  id varchar primary key,		
+  hash varchar not null
 );
