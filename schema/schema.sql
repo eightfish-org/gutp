@@ -102,16 +102,16 @@ CREATE TABLE gutpposttag_idhash (
   hash varchar not null
 );
 
-CREATE TABLE gutpcollabor (
+CREATE TABLE gutpmoderator (
   id varchar primary key,
   user_id varchar not null,
   subspace_id varchar not null,
-  space_collabor boolean not null,    -- is this a space collaborator
-  tag_id varchar not null,            -- is space_collabor is false, this field could have value
-  permission_level smallint not null   -- levels
+  subspace_moderator boolean not null,    -- is this a space moderator
+  tag_id varchar not null,                -- if subspace_moderator is false, this field could have value
+  permission_level smallint not null      -- levels
 );
 
-CREATE TABLE gutpcollabor_idhash (
+CREATE TABLE gutpmoderator_idhash (
   id varchar primary key,		-- this idhash pair requires the id field must be unique
   hash varchar not null
 );
