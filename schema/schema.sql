@@ -10,6 +10,7 @@ CREATE TABLE gutpuser (
   role smallint not null,           -- permission model
   status smallint not null,
   signup_time bigint not null,
+  pub_settings varchar not null,
   ext varchar not null              -- for certain extension, is very important to extensive app, you could place a json in it
 );
 
@@ -94,7 +95,8 @@ CREATE TABLE gutptag_idhash (
 CREATE TABLE gutpposttag (
   id varchar primary key,       -- we need this field for the relationship between post_id and tag_id is M:N
   post_id varchar not null,		-- the post id
-  tag_id varchar not null		-- the tag id
+  tag_id varchar not null,		-- the tag id
+  created_time bigint not null
 );
 
 CREATE TABLE gutpposttag_idhash (
@@ -108,7 +110,8 @@ CREATE TABLE gutpmoderator (
   subspace_id varchar not null,
   subspace_moderator boolean not null,    -- is this a space moderator
   tag_id varchar not null,                -- if subspace_moderator is false, this field could have value
-  permission_level smallint not null      -- levels
+  permission_level smallint not null,      -- levels
+  created_time bigint not null
 );
 
 CREATE TABLE gutpmoderator_idhash (
@@ -155,7 +158,7 @@ CREATE TABLE gutpfollow_idhash (
 
 
 ---------------------------------
----------  Private Part ---------
+---------  Privacy Part ---------
 CREATE TABLE gutpuserprofile (
   id varchar primary key,		    
   bio varchar not null,
