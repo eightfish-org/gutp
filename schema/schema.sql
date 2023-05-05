@@ -28,7 +28,7 @@ CREATE TABLE gutpsubspace (
   owner varchar not null,		    -- who ownes this subspace
   profession varchar not null,      -- which profession this subspace belongs to
   appid varchar not null,           -- which app/platform this subspace belongs to 
-  private boolean not null,         -- is this subspace private
+  is_private boolean not null,
   status smallint not null,
   weight smallint not null,		    -- used for ranks
   created_time bigint not null,
@@ -48,7 +48,7 @@ CREATE TABLE gutppost (
   extlink varchar not null,
   profession varchar not null,      -- which profession this subspace belongs to
   appid varchar not null,           -- which app/platform this subspace belongs to
-  private boolean not null,         -- is this post private
+  is_private boolean not null,
   status smallint not null,
   weight smallint not null,		    -- used for ranks
   created_time bigint not null,
@@ -66,7 +66,7 @@ CREATE TABLE gutpcomment (
   author_id varchar not null,
   post_id varchar not null,         -- the post this comment belongs to
   parent_comment_id varchar not null,     -- the replied comment id, if has
-  private boolean not null,         -- is this comment private
+  is_private boolean not null,
   status smallint not null,
   created_time bigint not null
 );
@@ -82,7 +82,7 @@ CREATE TABLE gutptag (
   subspace_id varchar not null,		  -- which subspace a tag belongs to
   creator_id varchar not null,
   weight smallint not null,		      -- weight for system level tag, or customized tag
-  private boolean not null,           -- is this tag private
+  is_private boolean not null,
   created_time bigint not null
 );
 
@@ -104,12 +104,14 @@ CREATE TABLE gutpposttag_idhash (
   hash varchar not null
 );
 
+CREATE TYPE moderatortype AS ENUM ('subspace', 'tag');
+
 CREATE TABLE gutpmoderator (
   id varchar primary key,
   user_id varchar not null,
-  subspace_id varchar not null,
-  subspace_moderator boolean not null,    -- is this a space moderator
-  tag_id varchar not null,                -- if subspace_moderator is false, this field could have value
+  type moderatortype not null,
+  subspace_id varchar,           -- if type is subspace, this field will have value
+  tag_id varchar,                -- if type is tag, this field will have value
   permission_level smallint not null,      -- levels
   created_time bigint not null
 );
