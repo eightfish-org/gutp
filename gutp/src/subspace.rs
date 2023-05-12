@@ -8,22 +8,39 @@ const DB_URL_ENV: &str = "DB_URL";
 
 use crate::gutp_types::GutpSubspace;
 
+enum GutpSubspaceStatus {
+    Normal = 0,
+    Frozen = 1,
+    Forbidden = 2,
+    Deleted = 3,
+}
+
+enum GutpSubspaceWeight {
+    Normal = 0,
+    Low = -1,
+    VeryLow = -2,
+    SuperLow = -3,
+    High = 1,
+    VeryHigh = 2,
+    SuperHigh = 2,
+}
+
 pub struct SubspaceModule;
 
 impl SubspaceModule {
     fn get_one(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV).unwrap();
+        let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded();
-        println!("in handler subspace get_one: params: {:?}", params);
+        let params = req.parse_urlencoded()?;
+        // println!("in handler subspace get_one: params: {:?}", params);
 
-        let subspace_id = params.get("id").unwrap();
+        let subspace_id = params.get("id")?;
 
         // construct a sql statement
         let (sql_statement, sql_params) =
             GutpSubspace::build_get_one_sql_and_params(subspace_id.as_str());
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params).unwrap();
-        println!("in handler subspace get_one: rowset: {:?}", rowset);
+        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        // println!("in handler subspace get_one: rowset: {:?}", rowset);
 
         // convert the raw vec[u8] to every rust struct filed, and convert the whole into a
         // rust struct vec, later we may find a gerneral type converter way
@@ -32,10 +49,10 @@ impl SubspaceModule {
             let sp = GutpSubspace::from_row(row);
             results.push(sp);
         }
-        println!("in handler subspace get_one: results: {:?}", results);
+        // println!("in handler subspace get_one: results: {:?}", results);
 
         let info = Info {
-            model_name: "gutpsubspace".to_string(),
+            model_name: GutpSubspace::model_name(),
             action: "get_one".to_string(),
             target: subspace_id.clone(),
             extra: "".to_string(),
@@ -47,27 +64,39 @@ impl SubspaceModule {
     }
 
     fn new_one(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV).unwrap();
+        let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded();
+        let params = req.parse_urlencoded()?;
 
-        let title = params.get("title").unwrap();
-        let content = params.get("content").unwrap();
-        let authorname = params.get("authorname").unwrap();
+        let title = params.get("title")?.to_owned();
+        let description = params.get("description")?.to_owned();
+        let banner = params.get("banner")?.to_owned();
+        let owner = params.get("owner")?.to_owned();
+        let profession = params.get("profession")?.to_owned();
+        let appid = params.get("appid")?.to_owned();
+        let private = params.get("private")?.parse::<bool>()?;
 
-        let id = req.ext().get("random_str").unwrap();
+        let id = req.ext().get("random_str")?.to_owned();
+        let time = req.ext().get("time")?.parse::<i64>()?;
 
         // construct a struct
-        let article = Article {
-            id: id.clone(),
-            title: title.clone(),
-            content: content.clone(),
-            authorname: authorname.clone(),
+        let subspace = GutpSubspace {
+            id,
+            title,
+            description,
+            banner,
+            owner,
+            profession,
+            appid,
+            private,
+            status: GutpSubspaceStatus::Normal,
+            weight: GutpSubspaceWeight::Normal,
+            created_time: time,
         };
 
         // construct a sql statement and param
-        let (sql_statement, sql_params) = article.build_insert_sql_and_params();
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params);
+        let (sql_statement, sql_params) = subspace.build_insert_sql_and_params();
+        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
         println!(
             "in handler article_new: _execute_results: {:?}",
             _execute_results
@@ -76,7 +105,7 @@ impl SubspaceModule {
         let results: Vec<Article> = vec![article];
 
         let info = Info {
-            model_name: "article".to_string(),
+            model_name: GutpSubspace::model_name(),
             action: "new".to_string(),
             target: id.clone(),
             extra: "".to_string(),
