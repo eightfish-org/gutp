@@ -28,7 +28,7 @@ CREATE TABLE gutpsubspace (
   owner varchar not null,		    -- who ownes this subspace
   profession varchar not null,      -- which profession this subspace belongs to
   appid varchar not null,           -- which app/platform this subspace belongs to 
-  is_private boolean not null,
+  is_public boolean not null,
   status smallint not null,
   weight smallint not null,		    -- used for ranks
   created_time bigint not null,
@@ -48,7 +48,7 @@ CREATE TABLE gutppost (
   extlink varchar not null,
   profession varchar not null,      -- which profession this subspace belongs to
   appid varchar not null,           -- which app/platform this subspace belongs to
-  is_private boolean not null,
+  is_public boolean not null,
   status smallint not null,
   weight smallint not null,		    -- used for ranks
   created_time bigint not null,
@@ -66,7 +66,7 @@ CREATE TABLE gutpcomment (
   author_id varchar not null,
   post_id varchar not null,         -- the post this comment belongs to
   parent_comment_id varchar not null,     -- the replied comment id, if has
-  is_private boolean not null,
+  is_public boolean not null,
   status smallint not null,
   created_time bigint not null
 );
@@ -82,7 +82,7 @@ CREATE TABLE gutptag (
   subspace_id varchar not null,		  -- which subspace a tag belongs to
   creator_id varchar not null,
   weight smallint not null,		      -- weight for system level tag, or customized tag
-  is_private boolean not null,
+  is_public boolean not null,
   created_time bigint not null
 );
 

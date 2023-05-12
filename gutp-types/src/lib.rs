@@ -20,7 +20,7 @@ struct GutpSubspace {
     owner: String,
     profession: String,
     appid: String,
-    private: bool,
+    is_public: bool,
     status: i16,
     weight: i16,
     created_time: i64,
@@ -35,7 +35,7 @@ struct GutpPost {
     extlink: String,
     profession: String,
     appid: String,
-    private: bool,
+    is_public: bool,
     status: i16,
     weight: i16,
     created_time: i64,
@@ -48,7 +48,7 @@ struct GutpComment {
     author_id: String,
     post_id: String,
     parent_comment_id: String,
-    private: bool,
+    is_public: bool,
     status: i16,
     created_time: i64,
 }
@@ -59,7 +59,7 @@ struct GutpTag {
     subspace_id: String,
     creator_id: String,
     weight: i16,
-    private: bool,
+    is_public: bool,
     created_time: i64,
 }
 

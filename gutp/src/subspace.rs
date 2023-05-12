@@ -74,7 +74,7 @@ impl SubspaceModule {
         let owner = params.get("owner")?.to_owned();
         let profession = params.get("profession")?.to_owned();
         let appid = params.get("appid")?.to_owned();
-        let private = params.get("private")?.parse::<bool>()?;
+        let is_public = params.get("is_public")?.parse::<bool>()?;
 
         let id = req.ext().get("random_str")?.to_owned();
         let time = req.ext().get("time")?.parse::<i64>()?;
@@ -88,7 +88,7 @@ impl SubspaceModule {
             owner,
             profession,
             appid,
-            private,
+            is_public,
             status: GutpSubspaceStatus::Normal,
             weight: GutpSubspaceWeight::Normal,
             created_time: time,
@@ -97,12 +97,8 @@ impl SubspaceModule {
         // construct a sql statement and param
         let (sql_statement, sql_params) = subspace.build_insert_sql_and_params();
         let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
-        println!(
-            "in handler article_new: _execute_results: {:?}",
-            _execute_results
-        );
 
-        let results: Vec<Article> = vec![article];
+        let results: Vec<GutpSubspace> = vec![subspace];
 
         let info = Info {
             model_name: GutpSubspace::model_name(),
@@ -117,31 +113,42 @@ impl SubspaceModule {
     }
 
     fn update(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV).unwrap();
+        let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded();
+        let params = req.parse_urlencoded()?;
 
-        let id = params.get("id").unwrap();
-        let title = params.get("title").unwrap();
-        let content = params.get("content").unwrap();
-        let authorname = params.get("authorname").unwrap();
+        let id = params.get("id")?;
+        let title = params.get("title")?.to_owned();
+        let description = params.get("description")?.to_owned();
+        let banner = params.get("banner")?.to_owned();
+        let owner = params.get("owner")?.to_owned();
+        let profession = params.get("profession")?.to_owned();
+        let appid = params.get("appid")?.to_owned();
+        let is_public = params.get("is_public")?.parse::<bool>()?;
 
-        // construct a struct
-        let article = Article {
-            id: id.clone(),
-            title: title.clone(),
-            content: content.clone(),
-            authorname: authorname.clone(),
+        // TODO: get the item from db, check whether obj in db
+        let old_subspace: GutpSubspace = xxx;
+
+        // TODO: update new obj with old
+        let subspace = GutpSubspace {
+            title,
+            description,
+            banner,
+            owner,
+            profession,
+            appid,
+            is_public,
+            .. old_subspace
         };
 
         // construct a sql statement and params
-        let (sql_statement, sql_params) = article.build_update_sql_and_params();
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params);
+        let (sql_statement, sql_params) = subspace.build_update_sql_and_params();
+        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
-        let results: Vec<Article> = vec![article];
+        let results: Vec<GutpSubspace> = vec![subspace];
 
         let info = Info {
-            model_name: "article".to_string(),
+            model_name: GutpSubspace::model_name(),
             action: "update".to_string(),
             target: id.clone(),
             extra: "".to_string(),
