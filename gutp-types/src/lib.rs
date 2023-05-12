@@ -11,6 +11,7 @@ struct GutpUser {
     ext: String,
 }
 
+#[derive(Debug, Clone, EightFishModel)]
 struct GutpSubspace {
     id: String,
     title: String,

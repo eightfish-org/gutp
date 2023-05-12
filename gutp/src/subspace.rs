@@ -1,49 +1,43 @@
 use eightfish::{EightFishModel, Info, Module, Request, Response, Result, Router, Status};
 use eightfish_derive::EightFishModel;
 use serde::{Deserialize, Serialize};
-use spin_sdk::pg::{self, DbValue, Decode, ParameterValue};
+use spin_sdk::pg;
 
 const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
 
-#[derive(Debug, Clone, Serialize, Deserialize, EightFishModel, Default)]
-pub struct Article {
-    id: String,
-    title: String,
-    content: String,
-    authorname: String,
-}
+use crate::gutp_types::GutpSubspace;
 
-pub struct ArticleModule;
+pub struct SubspaceModule;
 
-impl ArticleModule {
+impl SubspaceModule {
     fn get_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV).unwrap();
 
         let params = req.parse_urlencoded();
-        println!("in handler article: params: {:?}", params);
+        println!("in handler subspace get_one: params: {:?}", params);
 
-        let article_id = params.get("id").unwrap();
+        let subspace_id = params.get("id").unwrap();
 
         // construct a sql statement
         let (sql_statement, sql_params) =
-            Article::build_get_one_sql_and_params(article_id.as_str());
+            GutpSubspace::build_get_one_sql_and_params(subspace_id.as_str());
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params).unwrap();
-        println!("in handler article: rowset: {:?}", rowset);
+        println!("in handler subspace get_one: rowset: {:?}", rowset);
 
         // convert the raw vec[u8] to every rust struct filed, and convert the whole into a
         // rust struct vec, later we may find a gerneral type converter way
-        let mut results: Vec<Article> = vec![];
+        let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
-            let article = Article::from_row(row);
-            results.push(article);
+            let sp = GutpSubspace::from_row(row);
+            results.push(sp);
         }
-        println!("in handler article: results: {:?}", results);
+        println!("in handler subspace get_one: results: {:?}", results);
 
         let info = Info {
-            model_name: "article".to_string(),
+            model_name: "gutpsubspace".to_string(),
             action: "get_one".to_string(),
-            target: article_id.clone(),
+            target: subspace_id.clone(),
             extra: "".to_string(),
         };
 
@@ -52,7 +46,7 @@ impl ArticleModule {
         Ok(response)
     }
 
-    fn new_article(req: &mut Request) -> Result<Response> {
+    fn new_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV).unwrap();
 
         let params = req.parse_urlencoded();
