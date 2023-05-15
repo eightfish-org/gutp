@@ -25,9 +25,9 @@ enum GutpSubspaceWeight {
     SuperHigh = 2,
 }
 
-pub struct SubspaceModule;
+pub struct GutpSubspaceModule;
 
-impl SubspaceModule {
+impl GutpSubspaceModule {
     fn get_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
@@ -58,9 +58,7 @@ impl SubspaceModule {
             extra: "".to_string(),
         };
 
-        let response = Response::new(Status::Successful, info, results);
-
-        Ok(response)
+        Ok(Response::new(Status::Successful, info, results))
     }
 
     fn new_one(req: &mut Request) -> Result<Response> {
@@ -107,9 +105,7 @@ impl SubspaceModule {
             extra: "".to_string(),
         };
 
-        let response = Response::new(Status::Successful, info, results);
-
-        Ok(response)
+        Ok(Response::new(Status::Successful, info, results))
     }
 
     fn update(req: &mut Request) -> Result<Response> {
@@ -126,73 +122,74 @@ impl SubspaceModule {
         let appid = params.get("appid")?.to_owned();
         let is_public = params.get("is_public")?.parse::<bool>()?;
 
-        // TODO: get the item from db, check whether obj in db
-        let old_subspace: GutpSubspace = xxx;
+        // get the item from db, check whether obj in db
+        let (sql_statement, sql_params) = GutpSubspace::build_get_one_sql_and_params(id.as_str());
+        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        match rowset.rows.next() {
+            Some(row) => {
+                let old_subspace = GutpSubspace::from_row(row);
 
-        // TODO: update new obj with old
-        let subspace = GutpSubspace {
-            title,
-            description,
-            banner,
-            owner,
-            profession,
-            appid,
-            is_public,
-            .. old_subspace
-        };
+                // TODO: update new obj with old
+                let subspace = GutpSubspace {
+                    title,
+                    description,
+                    banner,
+                    owner,
+                    profession,
+                    appid,
+                    is_public,
+                    ..old_subspace
+                };
 
-        // construct a sql statement and params
-        let (sql_statement, sql_params) = subspace.build_update_sql_and_params();
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+                let (sql_statement, sql_params) = subspace.build_update_sql_and_params();
+                let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
-        let results: Vec<GutpSubspace> = vec![subspace];
+                let results: Vec<GutpSubspace> = vec![subspace];
 
-        let info = Info {
-            model_name: GutpSubspace::model_name(),
-            action: "update".to_string(),
-            target: id.clone(),
-            extra: "".to_string(),
-        };
+                let info = Info {
+                    model_name: GutpSubspace::model_name(),
+                    action: "update".to_string(),
+                    target: id.to_owned(),
+                    extra: "".to_string(),
+                };
 
-        let response = Response::new(Status::Successful, info, results);
-
-        Ok(response)
+                Ok(Response::new(Status::Successful, info, results))
+            }
+            None => {
+                bail!("update action: no item in db");
+            }
+        }
     }
 
     fn delete(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV).unwrap();
+        let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded();
+        let params = req.parse_urlencoded()?;
 
-        let id = params.get("id").unwrap();
+        let id = params.get("id")?;
 
         // construct a sql statement
-        let (sql_statement, sql_params) = Article::build_delete_sql_and_params(id.as_str());
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params);
-        // TODO check the pg result
-
-        let results: Vec<Article> = vec![];
+        let (sql_statement, sql_params) = GutpSubspace::build_delete_sql_and_params(id.as_str());
+        let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
         let info = Info {
-            model_name: "article".to_string(),
+            model_name: GutpSubspace::model_name(),
             action: "delete".to_string(),
-            target: id.clone(),
+            target: id.to_owned(),
             extra: "".to_string(),
         };
+        let results: Vec<GutpSubspace> = vec![];
 
-        let response = Response::new(Status::Successful, info, results);
-
-        Ok(response)
+        Ok(Response::new(Status::Successful, info, results))
     }
 }
 
-impl Module for ArticleModule {
+impl Module for GutpSubspaceModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/article/:id", Self::get_one);
-        //router.get("/article/latest", Self::get_latest);
-        router.post("/article/new", Self::new_article);
-        router.post("/article/update", Self::update);
-        router.post("/article/delete/:id", Self::delete);
+        router.get("/v1/subspace", Self::get_one);
+        router.post("/v1/subspace/new", Self::new_one);
+        router.post("/v1/subspace/update", Self::update);
+        router.post("/v1/subspace/delete", Self::delete);
 
         Ok(())
     }
