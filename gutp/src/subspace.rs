@@ -5,8 +5,9 @@ use spin_sdk::pg;
 
 const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
+const PAGESIZE: u64 = 25;
 
-use crate::gutp_types::GutpSubspace;
+use gutp_types::GutpSubspace;
 
 enum GutpSubspaceStatus {
     Normal = 0,
@@ -44,6 +45,142 @@ impl GutpSubspaceModule {
 
         // convert the raw vec[u8] to every rust struct filed, and convert the whole into a
         // rust struct vec, later we may find a gerneral type converter way
+        let mut results: Vec<GutpSubspace> = vec![];
+        for row in rowset.rows {
+            let sp = GutpSubspace::from_row(row);
+            results.push(sp);
+        }
+        // println!("in handler subspace get_one: results: {:?}", results);
+
+        let info = Info {
+            model_name: GutpSubspace::model_name(),
+            action: "get_one".to_string(),
+            target: subspace_id.clone(),
+            extra: "".to_string(),
+        };
+
+        Ok(Response::new(Status::Successful, info, results))
+    }
+
+    fn get_list(req: &mut Request) -> Result<Response> {
+        let pg_addr = std::env::var(DB_URL_ENV)?;
+
+        let params = req.parse_urlencoded()?;
+        // println!("in handler subspace get_one: params: {:?}", params);
+
+        let page = params.get("page").unwrap_or(0);
+        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
+        let offset = page * limit;
+
+        // construct a sql statement
+        let (sql_statement, sql_params) =
+            GutpSubspace::build_get_list_sql_and_params(offset, limit);
+        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        // println!("in handler subspace get_one: rowset: {:?}", rowset);
+
+        let mut results: Vec<GutpSubspace> = vec![];
+        for row in rowset.rows {
+            let sp = GutpSubspace::from_row(row);
+            results.push(sp);
+        }
+        // println!("in handler subspace get_one: results: {:?}", results);
+
+        let info = Info {
+            model_name: GutpSubspace::model_name(),
+            action: "get_one".to_string(),
+            target: subspace_id.clone(),
+            extra: "".to_string(),
+        };
+
+        Ok(Response::new(Status::Successful, info, results))
+    }
+
+    fn list_by_owner(req: &mut Request) -> Result<Response> {
+        let pg_addr = std::env::var(DB_URL_ENV)?;
+
+        let params = req.parse_urlencoded()?;
+        // println!("in handler subspace get_one: params: {:?}", params);
+
+        let owner = params.get("owner")?;
+        let page = params.get("page").unwrap_or(0);
+        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
+        let offset = page * limit;
+
+        // construct a sql statement
+        let (sql_statement, sql_params) =
+            GutpSubspace::build_get_list_by_sql_and_params("owner", owner, offset, limit);
+        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        // println!("in handler subspace get_one: rowset: {:?}", rowset);
+
+        // convert the raw vec[u8] to every rust struct filed, and convert the whole into a
+        // rust struct vec, later we may find a gerneral type converter way
+        let mut results: Vec<GutpSubspace> = vec![];
+        for row in rowset.rows {
+            let sp = GutpSubspace::from_row(row);
+            results.push(sp);
+        }
+        // println!("in handler subspace get_one: results: {:?}", results);
+
+        let info = Info {
+            model_name: GutpSubspace::model_name(),
+            action: "get_one".to_string(),
+            target: subspace_id.clone(),
+            extra: "".to_string(),
+        };
+
+        Ok(Response::new(Status::Successful, info, results))
+    }
+
+    fn list_by_profession(req: &mut Request) -> Result<Response> {
+        let pg_addr = std::env::var(DB_URL_ENV)?;
+
+        let params = req.parse_urlencoded()?;
+        // println!("in handler subspace get_one: params: {:?}", params);
+
+        let profession = params.get("profession")?;
+        let page = params.get("page").unwrap_or(0);
+        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
+        let offset = page * limit;
+
+        let (sql_statement, sql_params) =
+            GutpSubspace::build_get_list_by_sql_and_params("profession", profession, offset, limit);
+
+        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        // println!("in handler subspace get_one: rowset: {:?}", rowset);
+
+        let mut results: Vec<GutpSubspace> = vec![];
+        for row in rowset.rows {
+            let sp = GutpSubspace::from_row(row);
+            results.push(sp);
+        }
+        // println!("in handler subspace get_one: results: {:?}", results);
+
+        let info = Info {
+            model_name: GutpSubspace::model_name(),
+            action: "get_one".to_string(),
+            target: subspace_id.clone(),
+            extra: "".to_string(),
+        };
+
+        Ok(Response::new(Status::Successful, info, results))
+    }
+
+    fn list_by_appid(req: &mut Request) -> Result<Response> {
+        let pg_addr = std::env::var(DB_URL_ENV)?;
+
+        let params = req.parse_urlencoded()?;
+        // println!("in handler subspace get_one: params: {:?}", params);
+
+        let appid = params.get("appid")?;
+        let page = params.get("page").unwrap_or(0);
+        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
+        let offset = page * limit;
+
+        let (sql_statement, sql_params) =
+            GutpSubspace::build_get_list_by_sql_and_params("appid", appid, offset, limit);
+        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        // println!("in handler subspace get_one: rowset: {:?}", rowset);
+
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
             let sp = GutpSubspace::from_row(row);
@@ -187,7 +324,11 @@ impl GutpSubspaceModule {
 impl Module for GutpSubspaceModule {
     fn router(&self, router: &mut Router) -> Result<()> {
         router.get("/v1/subspace", Self::get_one);
-        router.post("/v1/subspace/new", Self::new_one);
+        router.get("/v1/subspace/list", Self::get_list);
+        router.get("/v1/subspace/list_by_owner", Self::list_by_owner);
+        router.get("/v1/subspace/list_by_profession", Self::list_by_profession);
+        router.get("/v1/subspace/list_by_appid", Self::list_by_appid);
+        router.post("/v1/subspace/create", Self::new_one);
         router.post("/v1/subspace/update", Self::update);
         router.post("/v1/subspace/delete", Self::delete);
 

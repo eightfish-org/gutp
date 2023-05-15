@@ -27,3 +27,5 @@ json-digest = "0.0.16"
 eightfish = {path = "../../eightfish"}
 eightfish-derive = {path = "../../eightfish/eightfish-derive"}
 spin_worker = {path = "../../eightfish/spin_worker"}
+
+gutp-types = {path = "../gutp-types/"}

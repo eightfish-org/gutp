@@ -145,6 +145,7 @@ dependencies = [
  "eightfish",
  "eightfish-derive",
  "form_urlencoded",
+ "gutp-types",
  "json-digest",
  "serde",
  "serde_json",
