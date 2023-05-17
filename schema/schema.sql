@@ -121,6 +121,18 @@ CREATE TABLE gutpmoderator_idhash (
   hash varchar not null
 );
 
+CREATE TABLE gutppostdiff (
+  id varchar primary key,
+  post_id varchar not null,
+  diff varchar not null,       
+  version_num int not null,       
+  created_time bigint not null
+);
+
+CREATE TABLE gutppostdiff_idhash (
+  id varchar primary key,		-- this idhash pair requires the id field must be unique
+  hash varchar not null
+);
 ---------------------------------
 ---------  Social Part ----------
 

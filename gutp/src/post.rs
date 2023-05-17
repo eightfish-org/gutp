@@ -10,16 +10,16 @@ const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
 const PAGESIZE: u64 = 25;
 
-use gutp_types::GutpSubspace;
+use gutp_types::GutpPost;
 
-enum GutpSubspaceStatus {
+enum GutpPostStatus {
     Normal = 0,
     Frozen = 1,
     Forbidden = 2,
     Deleted = 3,
 }
 
-enum GutpSubspaceWeight {
+enum GutpPostWeight {
     Normal = 0,
     Low = -1,
     VeryLow = -2,
@@ -29,34 +29,26 @@ enum GutpSubspaceWeight {
     SuperHigh = 2,
 }
 
-pub struct GutpSubspaceModule;
+pub struct GutpPostModule;
 
-impl GutpSubspaceModule {
+impl GutpPostModule {
     fn get_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        // println!("in handler subspace get_one: params: {:?}", params);
+        let post_id = params.get("id")?;
 
-        let subspace_id = params.get("id")?;
-
-        // construct a sql statement
-        let (sql_statement, sql_params) =
-            GutpSubspace::build_get_one_sql_and_params(subspace_id.as_str());
+        let (sql_statement, sql_params) = GutpPost::build_get_one_sql_and_params(post_id);
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-        // println!("in handler subspace get_one: rowset: {:?}", rowset);
 
-        // convert the raw vec[u8] to every rust struct filed, and convert the whole into a
-        // rust struct vec, later we may find a gerneral type converter way
-        let mut results: Vec<GutpSubspace> = vec![];
-        for row in rowset.rows {
-            let sp = GutpSubspace::from_row(row);
-            results.push(sp);
-        }
-        // println!("in handler subspace get_one: results: {:?}", results);
+        let results = if let Some(row) = rowset.rows.next() {
+            vec![GutpPost::from_row(row)]
+        } else {
+            return bail!("no this item".to_string());
+        };
 
         let info = Info {
-            model_name: GutpSubspace::model_name(),
+            model_name: GutpPost::model_name(),
             action: HandlerCRUD::GetOne,
             extra: "".to_string(),
         };
@@ -68,27 +60,51 @@ impl GutpSubspaceModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        // println!("in handler subspace get_one: params: {:?}", params);
 
         let page = params.get("page").unwrap_or(0);
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        // construct a sql statement
-        let (sql_statement, sql_params) =
-            GutpSubspace::build_get_list_sql_and_params(offset, limit);
+        let (sql_statement, sql_params) = GutpPost::build_get_list_sql_and_params(offset, limit);
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-        // println!("in handler subspace get_one: rowset: {:?}", rowset);
 
-        let mut results: Vec<GutpSubspace> = vec![];
+        let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
-            let sp = GutpSubspace::from_row(row);
+            let sp = GutpPost::from_row(row);
             results.push(sp);
         }
-        // println!("in handler subspace get_one: results: {:?}", results);
 
         let info = Info {
-            model_name: GutpSubspace::model_name(),
+            model_name: GutpPost::model_name(),
+            action: HandlerCRUD::GetOne,
+            extra: "".to_string(),
+        };
+
+        Ok(Response::new(Status::Successful, info, results))
+    }
+
+    fn list_by_subspace(req: &mut Request) -> Result<Response> {
+        let pg_addr = std::env::var(DB_URL_ENV)?;
+
+        let params = req.parse_urlencoded()?;
+
+        let subspace_id = params.get("subspace_id")?;
+        let page = params.get("page").unwrap_or(0);
+        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
+        let offset = page * limit;
+
+        let (sql_statement, sql_params) =
+            GutpPost::build_get_list_by_sql_and_params("subspace_id", subspace_id, offset, limit);
+        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+
+        let mut results: Vec<GutpPost> = vec![];
+        for row in rowset.rows {
+            let sp = GutpPost::from_row(row);
+            results.push(sp);
+        }
+
+        let info = Info {
+            model_name: GutpPost::model_name(),
             action: HandlerCRUD::List,
             extra: "".to_string(),
         };
@@ -96,34 +112,28 @@ impl GutpSubspaceModule {
         Ok(Response::new(Status::Successful, info, results))
     }
 
-    fn list_by_owner(req: &mut Request) -> Result<Response> {
+    fn list_by_author(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        // println!("in handler subspace get_one: params: {:?}", params);
 
-        let owner = params.get("owner")?;
+        let author_id = params.get("author_id")?;
         let page = params.get("page").unwrap_or(0);
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        // construct a sql statement
         let (sql_statement, sql_params) =
-            GutpSubspace::build_get_list_by_sql_and_params("owner", owner, offset, limit);
+            GutpPost::build_get_list_by_sql_and_params("author_id", author_id, offset, limit);
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-        // println!("in handler subspace get_one: rowset: {:?}", rowset);
 
-        // convert the raw vec[u8] to every rust struct filed, and convert the whole into a
-        // rust struct vec, later we may find a gerneral type converter way
-        let mut results: Vec<GutpSubspace> = vec![];
+        let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
-            let sp = GutpSubspace::from_row(row);
+            let sp = GutpPost::from_row(row);
             results.push(sp);
         }
-        // println!("in handler subspace get_one: results: {:?}", results);
 
         let info = Info {
-            model_name: GutpSubspace::model_name(),
+            model_name: GutpPost::model_name(),
             action: HandlerCRUD::List,
             extra: "".to_string(),
         };
@@ -135,7 +145,6 @@ impl GutpSubspaceModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        // println!("in handler subspace get_one: params: {:?}", params);
 
         let profession = params.get("profession")?;
         let page = params.get("page").unwrap_or(0);
@@ -143,20 +152,17 @@ impl GutpSubspaceModule {
         let offset = page * limit;
 
         let (sql_statement, sql_params) =
-            GutpSubspace::build_get_list_by_sql_and_params("profession", profession, offset, limit);
-
+            GutpPost::build_get_list_by_sql_and_params("profession", profession, offset, limit);
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-        // println!("in handler subspace get_one: rowset: {:?}", rowset);
 
-        let mut results: Vec<GutpSubspace> = vec![];
+        let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
-            let sp = GutpSubspace::from_row(row);
+            let sp = GutpPost::from_row(row);
             results.push(sp);
         }
-        // println!("in handler subspace get_one: results: {:?}", results);
 
         let info = Info {
-            model_name: GutpSubspace::model_name(),
+            model_name: GutpPost::model_name(),
             action: HandlerCRUD::List,
             extra: "".to_string(),
         };
@@ -168,7 +174,6 @@ impl GutpSubspaceModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        // println!("in handler subspace get_one: params: {:?}", params);
 
         let appid = params.get("appid")?;
         let page = params.get("page").unwrap_or(0);
@@ -176,19 +181,17 @@ impl GutpSubspaceModule {
         let offset = page * limit;
 
         let (sql_statement, sql_params) =
-            GutpSubspace::build_get_list_by_sql_and_params("appid", appid, offset, limit);
+            GutpPost::build_get_list_by_sql_and_params("appid", appid, offset, limit);
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-        // println!("in handler subspace get_one: rowset: {:?}", rowset);
 
-        let mut results: Vec<GutpSubspace> = vec![];
+        let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
-            let sp = GutpSubspace::from_row(row);
+            let sp = GutpPost::from_row(row);
             results.push(sp);
         }
-        // println!("in handler subspace get_one: results: {:?}", results);
 
         let info = Info {
-            model_name: GutpSubspace::model_name(),
+            model_name: GutpPost::model_name(),
             action: HandlerCRUD::List,
             extra: "".to_string(),
         };
@@ -202,9 +205,10 @@ impl GutpSubspaceModule {
         let params = req.parse_urlencoded()?;
 
         let title = params.get("title")?.to_owned();
-        let description = params.get("description")?.to_owned();
-        let banner = params.get("banner")?.to_owned();
-        let owner = params.get("owner")?.to_owned();
+        let content = params.get("content")?.to_owned();
+        let author_id = params.get("author_id")?.to_owned();
+        let subspace_id = params.get("subspace_id")?.to_owned();
+        let extlink = params.get("extlink")?.to_owned();
         let profession = params.get("profession")?.to_owned();
         let appid = params.get("appid")?.to_owned();
         let is_public = params.get("is_public")?.parse::<bool>()?;
@@ -212,29 +216,30 @@ impl GutpSubspaceModule {
         let id = req.ext().get("random_str")?.to_owned();
         let time = req.ext().get("time")?.parse::<i64>()?;
 
-        // construct a struct
-        let subspace = GutpSubspace {
+        let post = GutpPost {
             id,
             title,
-            description,
-            banner,
-            owner,
+            content,
+            author_id,
+            subspace_id,
+            extlink,
             profession,
             appid,
             is_public,
-            status: GutpSubspaceStatus::Normal,
-            weight: GutpSubspaceWeight::Normal,
+            status: GutpPostStatus::Normal,
+            weight: GutpPostWeight::Normal,
             created_time: time,
+            updated_time: time,
         };
 
         // construct a sql statement and param
-        let (sql_statement, sql_params) = subspace.build_insert_sql_and_params();
+        let (sql_statement, sql_params) = post.build_insert_sql_and_params();
         let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
-        let results: Vec<GutpSubspace> = vec![subspace];
+        let results: Vec<GutpPost> = vec![post];
 
         let info = Info {
-            model_name: GutpSubspace::model_name(),
+            model_name: GutpPost::model_name(),
             action: HandlerCRUD::Create,
             extra: "".to_string(),
         };
@@ -249,39 +254,40 @@ impl GutpSubspaceModule {
 
         let id = params.get("id")?;
         let title = params.get("title")?.to_owned();
-        let description = params.get("description")?.to_owned();
-        let banner = params.get("banner")?.to_owned();
-        let owner = params.get("owner")?.to_owned();
+        let content = params.get("content")?.to_owned();
+        let author_id = params.get("author_id")?.to_owned();
+        let subspace_id = params.get("subspace_id")?.to_owned();
+        let extlink = params.get("extlink")?.to_owned();
         let profession = params.get("profession")?.to_owned();
         let appid = params.get("appid")?.to_owned();
         let is_public = params.get("is_public")?.parse::<bool>()?;
 
         // get the item from db, check whether obj in db
-        let (sql_statement, sql_params) = GutpSubspace::build_get_one_sql_and_params(id.as_str());
+        let (sql_statement, sql_params) = GutpPost::build_get_one_sql_and_params(id.as_str());
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
         match rowset.rows.next() {
             Some(row) => {
-                let old_subspace = GutpSubspace::from_row(row);
+                let old_post = GutpPost::from_row(row);
 
-                // TODO: update new obj with old
-                let subspace = GutpSubspace {
+                let post = GutpPost {
                     title,
-                    description,
-                    banner,
-                    owner,
+                    content,
+                    author_id,
+                    subspace_id,
+                    extlink,
                     profession,
                     appid,
                     is_public,
-                    ..old_subspace
+                    ..old_post
                 };
 
-                let (sql_statement, sql_params) = subspace.build_update_sql_and_params();
+                let (sql_statement, sql_params) = post.build_update_sql_and_params();
                 let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
-                let results: Vec<GutpSubspace> = vec![subspace];
+                let results: Vec<GutpPost> = vec![post];
 
                 let info = Info {
-                    model_name: GutpSubspace::model_name(),
+                    model_name: GutpPost::model_name(),
                     action: HandlerCRUD::Update,
                     extra: "".to_string(),
                 };
@@ -301,31 +307,31 @@ impl GutpSubspaceModule {
 
         let id = params.get("id")?;
 
-        // construct a sql statement
-        let (sql_statement, sql_params) = GutpSubspace::build_delete_sql_and_params(id.as_str());
+        let (sql_statement, sql_params) = GutpPost::build_delete_sql_and_params(id.as_str());
         let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
         let info = Info {
-            model_name: GutpSubspace::model_name(),
+            model_name: GutpPost::model_name(),
             action: HandlerCRUD::Delete,
             extra: "".to_string(),
         };
-        let results: Vec<GutpSubspace> = vec![];
+        let results: Vec<GutpPost> = vec![];
 
         Ok(Response::new(Status::Successful, info, results))
     }
 }
 
-impl Module for GutpSubspaceModule {
+impl Module for GutpPostModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/subspace", Self::get_one);
-        router.get("/v1/subspace/list", Self::get_list);
-        router.get("/v1/subspace/list_by_owner", Self::list_by_owner);
-        router.get("/v1/subspace/list_by_profession", Self::list_by_profession);
-        router.get("/v1/subspace/list_by_appid", Self::list_by_appid);
-        router.post("/v1/subspace/create", Self::new_one);
-        router.post("/v1/subspace/update", Self::update);
-        router.post("/v1/subspace/delete", Self::delete);
+        router.get("/v1/post", Self::get_one);
+        router.get("/v1/post/list", Self::get_list);
+        router.get("/v1/post/list_by_subspace", Self::list_by_subspace);
+        router.get("/v1/post/list_by_author", Self::list_by_author);
+        router.get("/v1/post/list_by_profession", Self::list_by_profession);
+        router.get("/v1/post/list_by_appid", Self::list_by_appid);
+        router.post("/v1/post/create", Self::new_one);
+        router.post("/v1/post/update", Self::update);
+        router.post("/v1/post/delete", Self::delete);
 
         Ok(())
     }

@@ -157,6 +157,10 @@ dependencies = [
 [[package]]
 name = "gutp-types"
 version = "0.1.0"
+dependencies = [
+ "eightfish",
+ "eightfish-derive",
+]
 
 [[package]]
 name = "hashbrown"

@@ -1,3 +1,5 @@
+use eightfish::EightFishModel;
+
 #[derive(Debug, Clone, EightFishModel)]
 struct GutpUser {
     id: String,
