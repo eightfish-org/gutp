@@ -5,6 +5,7 @@ use spin_sdk::redis_component;
 
 use eightfish::{App as EightFishApp, GlobalFilter, Request, Response, Result as EightFishResult};
 
+mod comment;
 mod post;
 mod subspace;
 
@@ -24,6 +25,7 @@ pub fn build_app() -> EightFishApp {
     let mut sapp = EightFishApp::new();
     sapp.add_global_filter(Box::new(MyGlobalFilter))
         .add_module(Box::new(subspace::GutpSubspaceModule))
+        .add_module(Box::new(comment::GutpCommentModule))
         .add_module(Box::new(post::GutpPostModule));
 
     sapp

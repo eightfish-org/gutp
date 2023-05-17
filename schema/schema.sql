@@ -68,6 +68,7 @@ CREATE TABLE gutpcomment (
   parent_comment_id varchar not null,     -- the replied comment id, if has
   is_public boolean not null,
   status smallint not null,
+  weight int not null,		        -- calculated for ranks bwtween comments
   created_time bigint not null
 );
 
@@ -81,8 +82,8 @@ CREATE TABLE gutptag (
   caption varchar not null,
   subspace_id varchar not null,		  -- which subspace a tag belongs to
   creator_id varchar not null,
-  weight smallint not null,		      -- weight for system level tag, or customized tag
   is_public boolean not null,
+  weight smallint not null,		      -- weight for system level tag, or customized tag
   created_time bigint not null
 );
 

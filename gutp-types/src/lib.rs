@@ -52,6 +52,7 @@ struct GutpComment {
     parent_comment_id: String,
     is_public: bool,
     status: i16,
+    weight: i32,
     created_time: i64,
 }
 
@@ -60,8 +61,8 @@ struct GutpTag {
     caption: String,
     subspace_id: String,
     creator_id: String,
-    weight: i16,
     is_public: bool,
+    weight: i16,
     created_time: i64,
 }
 
