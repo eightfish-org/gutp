@@ -1,6 +1,9 @@
+use eightfish::EightFishModel;
 use eightfish_derive::EightFishModel;
+use serde::{Deserialize, Serialize};
+use spin_sdk::pg::{DbValue, Decode, ParameterValue};
 
-#[derive(Debug, Clone, EightFishModel)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
 struct GutpUser {
     id: String,
     account: String,
@@ -13,7 +16,7 @@ struct GutpUser {
     ext: String,
 }
 
-#[derive(Debug, Clone, EightFishModel)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
 struct GutpSubspace {
     id: String,
     title: String,
