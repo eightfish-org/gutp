@@ -4,7 +4,8 @@ use eightfish::{
 };
 use eightfish_derive::EightFishModel;
 use serde::{Deserialize, Serialize};
-use spin_sdk::pg;
+use spin_sdk::pg::{self, ParameterValue};
+use sql_builder::SqlBuilder;
 
 const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
@@ -38,8 +39,8 @@ impl GutpPostModule {
         let params = req.parse_urlencoded()?;
         let post_id = params.get("id")?;
 
-        let (sql_statement, sql_params) = GutpPost::build_get_one_sql_and_params(post_id);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpPost::build_get_one(post_id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
 
         let results = if let Some(row) = rowset.rows.next() {
             vec![GutpPost::from_row(row)]
@@ -65,8 +66,13 @@ impl GutpPostModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) = GutpPost::build_get_list_sql_and_params(offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpPost::model_name())
+            .fields(&GutpPost::fields())
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let rowset = pg::query(&pg_addr, &sql, &[])?;
 
         let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
@@ -93,9 +99,15 @@ impl GutpPostModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpPost::build_get_list_by_sql_and_params("subspace_id", subspace_id, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpPost::model_name())
+            .fields(&GutpPost::fields())
+            .and_where_eq("subspace_id", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(subspace_id);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
@@ -122,9 +134,15 @@ impl GutpPostModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpPost::build_get_list_by_sql_and_params("author_id", author_id, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpPost::model_name())
+            .fields(&GutpPost::fields())
+            .and_where_eq("author_id", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(author_id);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
@@ -151,9 +169,15 @@ impl GutpPostModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpPost::build_get_list_by_sql_and_params("profession", profession, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpPost::model_name())
+            .fields(&GutpPost::fields())
+            .and_where_eq("profession", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(profession);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
@@ -180,9 +204,15 @@ impl GutpPostModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpPost::build_get_list_by_sql_and_params("appid", appid, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpPost::model_name())
+            .fields(&GutpPost::fields())
+            .and_where_eq("appid", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(appid);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
@@ -232,9 +262,8 @@ impl GutpPostModule {
             updated_time: time,
         };
 
-        // construct a sql statement and param
-        let (sql_statement, sql_params) = post.build_insert_sql_and_params();
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql_statement, sql_params) = post.build_insert();
+        _ = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
         let results: Vec<GutpPost> = vec![post];
 
@@ -263,8 +292,8 @@ impl GutpPostModule {
         let is_public = params.get("is_public")?.parse::<bool>()?;
 
         // get the item from db, check whether obj in db
-        let (sql_statement, sql_params) = GutpPost::build_get_one_sql_and_params(id.as_str());
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpPost::build_get_by_id(id.as_str());
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
         match rowset.rows.next() {
             Some(row) => {
                 let old_post = GutpPost::from_row(row);
@@ -281,8 +310,8 @@ impl GutpPostModule {
                     ..old_post
                 };
 
-                let (sql_statement, sql_params) = post.build_update_sql_and_params();
-                let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+                let (sql, sql_params) = post.build_update();
+                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
                 let results: Vec<GutpPost> = vec![post];
 
@@ -307,8 +336,8 @@ impl GutpPostModule {
 
         let id = params.get("id")?;
 
-        let (sql_statement, sql_params) = GutpPost::build_delete_sql_and_params(id.as_str());
-        let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpPost::build_delete(id.as_str());
+        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
         let info = Info {
             model_name: GutpPost::model_name(),
