@@ -29,3 +29,4 @@ eightfish-derive = {path = "../../eightfish/eightfish-derive"}
 spin_worker = {path = "../../eightfish/spin_worker"}
 
 gutp-types = {path = "../gutp-types/"}
+sql-builder = "3.1"

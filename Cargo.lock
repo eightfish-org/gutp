@@ -107,6 +107,7 @@ dependencies = [
  "quote",
  "serde",
  "serde_json",
+ "sql-builder",
  "syn",
 ]
 
@@ -151,6 +152,7 @@ dependencies = [
  "serde_json",
  "spin-sdk",
  "spin_worker",
+ "sql-builder",
  "wit-bindgen-rust",
 ]
 
@@ -441,6 +443,16 @@ dependencies = [
  "serde_json",
  "spin-sdk",
  "wit-bindgen-rust",
+]
+
+[[package]]
+name = "sql-builder"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1008d95d2ec2d062959352527be30e10fec42a1aa5e5a48d990a5ff0fb9bdc0"
+dependencies = [
+ "anyhow",
+ "thiserror",
 ]
 
 [[package]]

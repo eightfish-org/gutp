@@ -4,7 +4,8 @@ use eightfish::{
 };
 use eightfish_derive::EightFishModel;
 use serde::{Deserialize, Serialize};
-use spin_sdk::pg;
+use spin_sdk::pg::{self, ParameterValue};
+use sql_builder::SqlBuilder;
 
 const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
@@ -36,18 +37,12 @@ impl GutpSubspaceModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        // println!("in handler subspace get_one: params: {:?}", params);
 
         let subspace_id = params.get("id")?;
 
-        // construct a sql statement
-        let (sql_statement, sql_params) =
-            GutpSubspace::build_get_one_sql_and_params(subspace_id.as_str());
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-        // println!("in handler subspace get_one: rowset: {:?}", rowset);
+        let (sql, sql_params) = GutpSubspace::build_get_by_id(subspace_id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
 
-        // convert the raw vec[u8] to every rust struct filed, and convert the whole into a
-        // rust struct vec, later we may find a gerneral type converter way
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
             let sp = GutpSubspace::from_row(row);
@@ -68,24 +63,24 @@ impl GutpSubspaceModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        // println!("in handler subspace get_one: params: {:?}", params);
 
         let page = params.get("page").unwrap_or(0);
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        // construct a sql statement
-        let (sql_statement, sql_params) =
-            GutpSubspace::build_get_list_sql_and_params(offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-        // println!("in handler subspace get_one: rowset: {:?}", rowset);
+        let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
+            .fields(&GutpSubspace::fields())
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let rowset = pg::query(&pg_addr, &sql, &[])?;
 
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
             let sp = GutpSubspace::from_row(row);
             results.push(sp);
         }
-        // println!("in handler subspace get_one: results: {:?}", results);
 
         let info = Info {
             model_name: GutpSubspace::model_name(),
@@ -107,20 +102,21 @@ impl GutpSubspaceModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        // construct a sql statement
-        let (sql_statement, sql_params) =
-            GutpSubspace::build_get_list_by_sql_and_params("owner", owner, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-        // println!("in handler subspace get_one: rowset: {:?}", rowset);
+        let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
+            .fields(&GutpSubspace::fields())
+            .and_where_eq("owner", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(owner);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
-        // convert the raw vec[u8] to every rust struct filed, and convert the whole into a
-        // rust struct vec, later we may find a gerneral type converter way
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
             let sp = GutpSubspace::from_row(row);
             results.push(sp);
         }
-        // println!("in handler subspace get_one: results: {:?}", results);
 
         let info = Info {
             model_name: GutpSubspace::model_name(),
@@ -142,18 +138,21 @@ impl GutpSubspaceModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpSubspace::build_get_list_by_sql_and_params("profession", profession, offset, limit);
-
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-        // println!("in handler subspace get_one: rowset: {:?}", rowset);
+        let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
+            .fields(&GutpSubspace::fields())
+            .and_where_eq("profession", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(profession);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
             let sp = GutpSubspace::from_row(row);
             results.push(sp);
         }
-        // println!("in handler subspace get_one: results: {:?}", results);
 
         let info = Info {
             model_name: GutpSubspace::model_name(),
@@ -168,24 +167,27 @@ impl GutpSubspaceModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        // println!("in handler subspace get_one: params: {:?}", params);
 
         let appid = params.get("appid")?;
         let page = params.get("page").unwrap_or(0);
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpSubspace::build_get_list_by_sql_and_params("appid", appid, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-        // println!("in handler subspace get_one: rowset: {:?}", rowset);
+        let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
+            .fields(&GutpSubspace::fields())
+            .and_where_eq("appid", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(appid);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
             let sp = GutpSubspace::from_row(row);
             results.push(sp);
         }
-        // println!("in handler subspace get_one: results: {:?}", results);
 
         let info = Info {
             model_name: GutpSubspace::model_name(),
@@ -212,7 +214,6 @@ impl GutpSubspaceModule {
         let id = req.ext().get("random_str")?.to_owned();
         let time = req.ext().get("time")?.parse::<i64>()?;
 
-        // construct a struct
         let subspace = GutpSubspace {
             id,
             title,
@@ -227,9 +228,8 @@ impl GutpSubspaceModule {
             created_time: time,
         };
 
-        // construct a sql statement and param
-        let (sql_statement, sql_params) = subspace.build_insert_sql_and_params();
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = subspace.build_insert();
+        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
         let results: Vec<GutpSubspace> = vec![subspace];
 
@@ -257,8 +257,8 @@ impl GutpSubspaceModule {
         let is_public = params.get("is_public")?.parse::<bool>()?;
 
         // get the item from db, check whether obj in db
-        let (sql_statement, sql_params) = GutpSubspace::build_get_one_sql_and_params(id.as_str());
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpSubspace::build_get_by_id(id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
         match rowset.rows.next() {
             Some(row) => {
                 let old_subspace = GutpSubspace::from_row(row);
@@ -275,8 +275,8 @@ impl GutpSubspaceModule {
                     ..old_subspace
                 };
 
-                let (sql_statement, sql_params) = subspace.build_update_sql_and_params();
-                let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+                let (sql, sql_params) = subspace.build_update();
+                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
                 let results: Vec<GutpSubspace> = vec![subspace];
 
@@ -301,9 +301,8 @@ impl GutpSubspaceModule {
 
         let id = params.get("id")?;
 
-        // construct a sql statement
-        let (sql_statement, sql_params) = GutpSubspace::build_delete_sql_and_params(id.as_str());
-        let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql_statement, sql_params) = GutpSubspace::build_delete(id);
+        _ = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
         let info = Info {
             model_name: GutpSubspace::model_name(),
