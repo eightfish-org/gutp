@@ -70,7 +70,7 @@ impl GutpCommentModule {
 
         let info = Info {
             model_name: GutpComment::model_name(),
-            action: HandlerCRUD::GetOne,
+            action: HandlerCRUD::List,
             extra: "".to_string(),
         };
 

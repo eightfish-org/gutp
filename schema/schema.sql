@@ -105,14 +105,12 @@ CREATE TABLE gutpposttag_idhash (
   hash varchar not null
 );
 
-CREATE TYPE moderatortype AS ENUM ('subspace', 'tag');
-
 CREATE TABLE gutpmoderator (
   id varchar primary key,
   user_id varchar not null,
-  type moderatortype not null,
-  subspace_id varchar,           -- if type is subspace, this field will have value
-  tag_id varchar,                -- if type is tag, this field will have value
+  is_subspace_moderator boolean not null,
+  subspace_id varchar not null,           -- if type is subspace, this field will have value
+  tag_id varchar not null,                -- if type is tag, this field will have value
   permission_level smallint not null,      -- levels
   created_time bigint not null
 );

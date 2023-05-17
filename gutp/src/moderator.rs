@@ -10,45 +10,28 @@ const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
 const PAGESIZE: u64 = 25;
 
-use gutp_types::GutpPost;
+use gutp_types::GutpModerator;
 
-enum GutpPostStatus {
-    Normal = 0,
-    Frozen = 1,
-    Forbidden = 2,
-    Deleted = 3,
-}
+pub struct GutpModeratorModule;
 
-enum GutpPostWeight {
-    Normal = 0,
-    Low = -1,
-    VeryLow = -2,
-    SuperLow = -3,
-    High = 1,
-    VeryHigh = 2,
-    SuperHigh = 2,
-}
-
-pub struct GutpPostModule;
-
-impl GutpPostModule {
+impl GutpModeratorModule {
     fn get_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        let post_id = params.get("id")?;
+        let moderator_id = params.get("id")?;
 
-        let (sql_statement, sql_params) = GutpPost::build_get_one_sql_and_params(post_id);
+        let (sql_statement, sql_params) = GutpModerator::build_get_one_sql_and_params(moderator_id);
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
 
         let results = if let Some(row) = rowset.rows.next() {
-            vec![GutpPost::from_row(row)]
+            vec![GutpModerator::from_row(row)]
         } else {
             return bail!("no this item".to_string());
         };
 
         let info = Info {
-            model_name: GutpPost::model_name(),
+            model_name: GutpModerator::model_name(),
             action: HandlerCRUD::GetOne,
             extra: "".to_string(),
         };
@@ -65,17 +48,18 @@ impl GutpPostModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) = GutpPost::build_get_list_sql_and_params(offset, limit);
+        let (sql_statement, sql_params) =
+            GutpModerator::build_get_list_sql_and_params(offset, limit);
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
 
-        let mut results: Vec<GutpPost> = vec![];
+        let mut results: Vec<GutpModerator> = vec![];
         for row in rowset.rows {
-            let sp = GutpPost::from_row(row);
+            let sp = GutpModerator::from_row(row);
             results.push(sp);
         }
 
         let info = Info {
-            model_name: GutpPost::model_name(),
+            model_name: GutpModerator::model_name(),
             action: HandlerCRUD::List,
             extra: "".to_string(),
         };
@@ -93,18 +77,22 @@ impl GutpPostModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpPost::build_get_list_by_sql_and_params("subspace_id", subspace_id, offset, limit);
+        let (sql_statement, sql_params) = GutpModerator::build_get_list_by_sql_and_params(
+            "subspace_id",
+            subspace_id,
+            offset,
+            limit,
+        );
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
 
-        let mut results: Vec<GutpPost> = vec![];
+        let mut results: Vec<GutpModerator> = vec![];
         for row in rowset.rows {
-            let sp = GutpPost::from_row(row);
+            let sp = GutpModerator::from_row(row);
             results.push(sp);
         }
 
         let info = Info {
-            model_name: GutpPost::model_name(),
+            model_name: GutpModerator::model_name(),
             action: HandlerCRUD::List,
             extra: "".to_string(),
         };
@@ -112,28 +100,28 @@ impl GutpPostModule {
         Ok(Response::new(Status::Successful, info, results))
     }
 
-    fn list_by_author(req: &mut Request) -> Result<Response> {
+    fn list_by_user(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
 
-        let author_id = params.get("author_id")?;
+        let user_id = params.get("user_id")?;
         let page = params.get("page").unwrap_or(0);
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
         let (sql_statement, sql_params) =
-            GutpPost::build_get_list_by_sql_and_params("author_id", author_id, offset, limit);
+            GutpModerator::build_get_list_by_sql_and_params("user_id", user_id, offset, limit);
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
 
-        let mut results: Vec<GutpPost> = vec![];
+        let mut results: Vec<GutpModerator> = vec![];
         for row in rowset.rows {
-            let sp = GutpPost::from_row(row);
+            let sp = GutpModerator::from_row(row);
             results.push(sp);
         }
 
         let info = Info {
-            model_name: GutpPost::model_name(),
+            model_name: GutpModerator::model_name(),
             action: HandlerCRUD::List,
             extra: "".to_string(),
         };
@@ -141,57 +129,28 @@ impl GutpPostModule {
         Ok(Response::new(Status::Successful, info, results))
     }
 
-    fn list_by_profession(req: &mut Request) -> Result<Response> {
+    fn list_by_tag(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
 
-        let profession = params.get("profession")?;
+        let tag_id = params.get("tag_id")?;
         let page = params.get("page").unwrap_or(0);
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
         let (sql_statement, sql_params) =
-            GutpPost::build_get_list_by_sql_and_params("profession", profession, offset, limit);
+            GutpModerator::build_get_list_by_sql_and_params("tag_id", tag_id, offset, limit);
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
 
-        let mut results: Vec<GutpPost> = vec![];
+        let mut results: Vec<GutpModerator> = vec![];
         for row in rowset.rows {
-            let sp = GutpPost::from_row(row);
+            let sp = GutpModerator::from_row(row);
             results.push(sp);
         }
 
         let info = Info {
-            model_name: GutpPost::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
-    }
-
-    fn list_by_appid(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-
-        let params = req.parse_urlencoded()?;
-
-        let appid = params.get("appid")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
-
-        let (sql_statement, sql_params) =
-            GutpPost::build_get_list_by_sql_and_params("appid", appid, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
-
-        let mut results: Vec<GutpPost> = vec![];
-        for row in rowset.rows {
-            let sp = GutpPost::from_row(row);
-            results.push(sp);
-        }
-
-        let info = Info {
-            model_name: GutpPost::model_name(),
+            model_name: GutpModerator::model_name(),
             action: HandlerCRUD::List,
             extra: "".to_string(),
         };
@@ -204,42 +163,32 @@ impl GutpPostModule {
 
         let params = req.parse_urlencoded()?;
 
-        let title = params.get("title")?.to_owned();
-        let content = params.get("content")?.to_owned();
-        let author_id = params.get("author_id")?.to_owned();
+        let user_id = params.get("user_id")?.to_owned();
+        let is_subspace_moderator = params.get("is_smoderator")?.parse::<bool>()?;
         let subspace_id = params.get("subspace_id")?.to_owned();
-        let extlink = params.get("extlink")?.to_owned();
-        let profession = params.get("profession")?.to_owned();
-        let appid = params.get("appid")?.to_owned();
-        let is_public = params.get("is_public")?.parse::<bool>()?;
+        let tag_id = params.get("tag_id")?.to_owned();
+        let permission_level = params.get("permission_level")?.parse::<i16>()?;
 
         let id = req.ext().get("random_str")?.to_owned();
         let time = req.ext().get("time")?.parse::<i64>()?;
 
-        let post = GutpPost {
+        let moderator = GutpModerator {
             id,
-            title,
-            content,
-            author_id,
+            user_id,
+            is_subspace_moderator,
             subspace_id,
-            extlink,
-            profession,
-            appid,
-            is_public,
-            status: GutpPostStatus::Normal,
-            weight: GutpPostWeight::Normal,
+            tag_id,
+            permission_level,
             created_time: time,
-            updated_time: time,
         };
 
-        // construct a sql statement and param
-        let (sql_statement, sql_params) = post.build_insert_sql_and_params();
+        let (sql_statement, sql_params) = moderator.build_insert_sql_and_params();
         let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
-        let results: Vec<GutpPost> = vec![post];
+        let results: Vec<GutpModerator> = vec![moderator];
 
         let info = Info {
-            model_name: GutpPost::model_name(),
+            model_name: GutpModerator::model_name(),
             action: HandlerCRUD::Create,
             extra: "".to_string(),
         };
@@ -253,41 +202,35 @@ impl GutpPostModule {
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id")?;
-        let title = params.get("title")?.to_owned();
-        let content = params.get("content")?.to_owned();
-        let author_id = params.get("author_id")?.to_owned();
+        let user_id = params.get("user_id")?.to_owned();
+        let is_subspace_moderator = params.get("is_smoderator")?.parse::<bool>()?;
         let subspace_id = params.get("subspace_id")?.to_owned();
-        let extlink = params.get("extlink")?.to_owned();
-        let profession = params.get("profession")?.to_owned();
-        let appid = params.get("appid")?.to_owned();
-        let is_public = params.get("is_public")?.parse::<bool>()?;
+        let tag_id = params.get("tag_id")?.to_owned();
+        let permission_level = params.get("permission_level")?.parse::<i16>()?;
 
         // get the item from db, check whether obj in db
-        let (sql_statement, sql_params) = GutpPost::build_get_one_sql_and_params(id.as_str());
+        let (sql_statement, sql_params) = GutpModerator::build_get_one_sql_and_params(id.as_str());
         let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
         match rowset.rows.next() {
             Some(row) => {
-                let old_post = GutpPost::from_row(row);
+                let old_moderator = GutpModerator::from_row(row);
 
-                let post = GutpPost {
-                    title,
-                    content,
-                    author_id,
+                let moderator = GutpModerator {
+                    user_id,
+                    is_subspace_moderator,
                     subspace_id,
-                    extlink,
-                    profession,
-                    appid,
-                    is_public,
-                    ..old_post
+                    tag_id,
+                    permission_level,
+                    ..old_moderator
                 };
 
-                let (sql_statement, sql_params) = post.build_update_sql_and_params();
+                let (sql_statement, sql_params) = moderator.build_update_sql_and_params();
                 let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
-                let results: Vec<GutpPost> = vec![post];
+                let results: Vec<GutpModerator> = vec![moderator];
 
                 let info = Info {
-                    model_name: GutpPost::model_name(),
+                    model_name: GutpModerator::model_name(),
                     action: HandlerCRUD::Update,
                     extra: "".to_string(),
                 };
@@ -307,31 +250,30 @@ impl GutpPostModule {
 
         let id = params.get("id")?;
 
-        let (sql_statement, sql_params) = GutpPost::build_delete_sql_and_params(id.as_str());
+        let (sql_statement, sql_params) = GutpModerator::build_delete_sql_and_params(id.as_str());
         let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
 
         let info = Info {
-            model_name: GutpPost::model_name(),
+            model_name: GutpModerator::model_name(),
             action: HandlerCRUD::Delete,
             extra: "".to_string(),
         };
-        let results: Vec<GutpPost> = vec![];
+        let results: Vec<GutpModerator> = vec![];
 
         Ok(Response::new(Status::Successful, info, results))
     }
 }
 
-impl Module for GutpPostModule {
+impl Module for GutpModeratorModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/post", Self::get_one);
-        router.get("/v1/post/list", Self::get_list);
-        router.get("/v1/post/list_by_subspace", Self::list_by_subspace);
-        router.get("/v1/post/list_by_author", Self::list_by_author);
-        router.get("/v1/post/list_by_profession", Self::list_by_profession);
-        router.get("/v1/post/list_by_appid", Self::list_by_appid);
-        router.post("/v1/post/create", Self::new_one);
-        router.post("/v1/post/update", Self::update);
-        router.post("/v1/post/delete", Self::delete);
+        router.get("/v1/moderator", Self::get_one);
+        router.get("/v1/moderator/list", Self::get_list);
+        router.get("/v1/moderator/list_by_subspace", Self::list_by_subspace);
+        router.get("/v1/moderator/list_by_user", Self::list_by_user);
+        router.get("/v1/moderator/list_by_tag", Self::list_by_tag);
+        router.post("/v1/moderator/create", Self::new_one);
+        router.post("/v1/moderator/update", Self::update);
+        router.post("/v1/moderator/delete", Self::delete);
 
         Ok(())
     }

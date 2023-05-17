@@ -1,4 +1,4 @@
-use eightfish::EightFishModel;
+use eightfish_derive::EightFishModel;
 
 #[derive(Debug, Clone, EightFishModel)]
 struct GutpUser {
@@ -66,19 +66,27 @@ struct GutpTag {
     created_time: i64,
 }
 
+struct GutpPostTag {
+    id: String,
+    post_id: String,
+    tag_id: String,
+    created_time: i64,
+}
+
 struct GutpModerator {
     id: String,
     user_id: String,
+    is_subspace_moderator: bool,
     subspace_id: String,
-    subspace_moderator: bool,
     tag_id: String,
     permission_level: i16,
     created_time: i64,
 }
 
-struct GutpPostTag {
+pub struct GutpPostDiff {
     id: String,
     post_id: String,
-    tag_id: String,
+    diff: String,
+    version_num: i32,
     created_time: i64,
 }

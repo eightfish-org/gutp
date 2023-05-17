@@ -6,8 +6,12 @@ use spin_sdk::redis_component;
 use eightfish::{App as EightFishApp, GlobalFilter, Request, Response, Result as EightFishResult};
 
 mod comment;
+mod moderator;
 mod post;
+mod postdiff;
+mod posttag;
 mod subspace;
+mod tag;
 
 struct MyGlobalFilter;
 
@@ -24,9 +28,13 @@ impl GlobalFilter for MyGlobalFilter {
 pub fn build_app() -> EightFishApp {
     let mut sapp = EightFishApp::new();
     sapp.add_global_filter(Box::new(MyGlobalFilter))
-        .add_module(Box::new(subspace::GutpSubspaceModule))
         .add_module(Box::new(comment::GutpCommentModule))
-        .add_module(Box::new(post::GutpPostModule));
+        .add_module(Box::new(moderator::GutpModeratorModule))
+        .add_module(Box::new(post::GutpPostModule))
+        .add_module(Box::new(postdiff::GutpPostDiffModule))
+        .add_module(Box::new(posttag::GutpPostTagModule))
+        .add_module(Box::new(subspace::GutpSubspaceModule))
+        .add_module(Box::new(tag::GutpTagModule));
 
     sapp
 }
