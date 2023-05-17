@@ -4,7 +4,8 @@ use eightfish::{
 };
 use eightfish_derive::EightFishModel;
 use serde::{Deserialize, Serialize};
-use spin_sdk::pg;
+use spin_sdk::pg::{self, ParameterValue};
+use sql_builder::SqlBuilder;
 
 const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
@@ -21,8 +22,8 @@ impl GutpPostDiffModule {
         let params = req.parse_urlencoded()?;
         let postdiff_id = params.get("id")?;
 
-        let (sql_statement, sql_params) = GutpPostDiff::build_get_one_sql_and_params(postdiff_id);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpPostDiff::build_get_by_id(postdiff_id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
 
         let results = if let Some(row) = rowset.rows.next() {
             vec![GutpPostDiff::from_row(row)]
@@ -48,9 +49,13 @@ impl GutpPostDiffModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpPostDiff::build_get_list_sql_and_params(offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpPostDiff::model_name())
+            .fields(&GutpPostDiff::fields())
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let rowset = pg::query(&pg_addr, &sql, &[])?;
 
         let mut results: Vec<GutpPostDiff> = vec![];
         for row in rowset.rows {
@@ -77,9 +82,15 @@ impl GutpPostDiffModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpPostDiff::build_get_list_by_sql_and_params("post_id", post_id, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpPostDiff::model_name())
+            .fields(&GutpPostDiff::fields())
+            .and_where_eq("post_id", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(post_id);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpPostDiff> = vec![];
         for row in rowset.rows {
@@ -116,8 +127,8 @@ impl GutpPostDiffModule {
             created_time: time,
         };
 
-        let (sql_statement, sql_params) = postdiff.build_insert_sql_and_params();
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = postdiff.build_insert();
+        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
         let results: Vec<GutpPostDiff> = vec![postdiff];
 
@@ -141,8 +152,8 @@ impl GutpPostDiffModule {
         let version_num = params.get("version_num")?.parse::<i32>()?;
 
         // get the item from db, check whether obj in db
-        let (sql_statement, sql_params) = GutpPostDiff::build_get_one_sql_and_params(id.as_str());
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpPostDiff::build_get_by_id(id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
         match rowset.rows.next() {
             Some(row) => {
                 let old_postdiff = GutpPostDiff::from_row(row);
@@ -154,8 +165,8 @@ impl GutpPostDiffModule {
                     ..old_postdiff
                 };
 
-                let (sql_statement, sql_params) = postdiff.build_update_sql_and_params();
-                let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+                let (sql, sql_params) = postdiff.build_update();
+                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
                 let results: Vec<GutpPostDiff> = vec![postdiff];
 
@@ -180,8 +191,8 @@ impl GutpPostDiffModule {
 
         let id = params.get("id")?;
 
-        let (sql_statement, sql_params) = GutpPostDiff::build_delete_sql_and_params(id.as_str());
-        let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpPostDiff::build_delete(id);
+        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
         let info = Info {
             model_name: GutpPostDiff::model_name(),

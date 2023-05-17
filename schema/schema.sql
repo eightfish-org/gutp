@@ -25,7 +25,7 @@ CREATE TABLE gutpsubspace (
   title varchar not null,
   description varchar not null,
   banner varchar not null,          -- a pic url to capture people's eyes
-  owner varchar not null,		    -- who ownes this subspace
+  owner_id varchar not null,		    -- who ownes this subspace
   profession varchar not null,      -- which profession this subspace belongs to
   appid varchar not null,           -- which app/platform this subspace belongs to 
   is_public boolean not null,

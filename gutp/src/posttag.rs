@@ -4,7 +4,8 @@ use eightfish::{
 };
 use eightfish_derive::EightFishModel;
 use serde::{Deserialize, Serialize};
-use spin_sdk::pg;
+use spin_sdk::pg::{self, ParameterValue};
+use sql_builder::SqlBuilder;
 
 const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
@@ -21,8 +22,8 @@ impl GutpPostTagModule {
         let params = req.parse_urlencoded()?;
         let posttag_id = params.get("id")?;
 
-        let (sql_statement, sql_params) = GutpPostTag::build_get_one_sql_and_params(posttag_id);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpPostTag::build_get_by_id(posttag_id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
 
         let results = if let Some(row) = rowset.rows.next() {
             vec![GutpPostTag::from_row(row)]
@@ -48,8 +49,13 @@ impl GutpPostTagModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) = GutpPostTag::build_get_list_sql_and_params(offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpPostTag::model_name())
+            .fields(&GutpPostTag::fields())
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let rowset = pg::query(&pg_addr, &sql, &[])?;
 
         let mut results: Vec<GutpPostTag> = vec![];
         for row in rowset.rows {
@@ -76,9 +82,15 @@ impl GutpPostTagModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpPostTag::build_get_list_by_sql_and_params("post_id", post_id, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpPostTag::model_name())
+            .fields(&GutpPostTag::fields())
+            .and_where_eq("post_id", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(post_id);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpPostTag> = vec![];
         for row in rowset.rows {
@@ -105,9 +117,15 @@ impl GutpPostTagModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpPostTag::build_get_list_by_sql_and_params("tag_id", tag_id, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpPostTag::model_name())
+            .fields(&GutpPostTag::fields())
+            .and_where_eq("tag_id", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(tag_id);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpPostTag> = vec![];
         for row in rowset.rows {
@@ -143,8 +161,8 @@ impl GutpPostTagModule {
         };
 
         // construct a sql statement and param
-        let (sql_statement, sql_params) = posttag.build_insert_sql_and_params();
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = posttag.build_insert();
+        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
         let results: Vec<GutpPostTag> = vec![posttag];
 
@@ -167,8 +185,8 @@ impl GutpPostTagModule {
         let tag_id = params.get("tag_id")?.to_owned();
 
         // get the item from db, check whether obj in db
-        let (sql_statement, sql_params) = GutpPostTag::build_get_one_sql_and_params(id.as_str());
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpPostTag::build_get_by_id(id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
         match rowset.rows.next() {
             Some(row) => {
                 let old_posttag = GutpPostTag::from_row(row);
@@ -179,8 +197,8 @@ impl GutpPostTagModule {
                     ..old_posttag
                 };
 
-                let (sql_statement, sql_params) = posttag.build_update_sql_and_params();
-                let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+                let (sql, sql_params) = posttag.build_update();
+                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
                 let results: Vec<GutpPostTag> = vec![posttag];
 
@@ -205,8 +223,8 @@ impl GutpPostTagModule {
 
         let id = params.get("id")?;
 
-        let (sql_statement, sql_params) = GutpPostTag::build_delete_sql_and_params(id.as_str());
-        let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpPostTag::build_delete(id.as_str());
+        let _er = pg::execute(&pg_addr, &sql, &sql_params)?;
 
         let info = Info {
             model_name: GutpPostTag::model_name(),

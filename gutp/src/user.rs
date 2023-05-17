@@ -3,108 +3,90 @@ use eightfish_derive::EightFishModel;
 use gutp_types::GutpUser;
 use serde::{Deserialize, Serialize};
 use spin_sdk::pg::{self, DbValue, Decode, ParameterValue};
+use sql_builder::SqlBuilder;
 
 const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
 
-// pub struct GutpUser {
-//     id: String,
-//     account: String,
-//     nickname: String,
-//     avatar: String,
-//     role: i64,
-//     status: i64,
-//     signup_time: i64,
-//     pub_settings: String,
-//     ext: String,
-// }
+use gutp_types::GutpUser;
+
+enum GutpUserStatus {
+    Normal = 0,
+    Frozen = 1,
+    Forbidden = 2,
+    Deleted = 3,
+}
+
+enum GutpUserRole {
+    Normal = 0,
+}
 
 pub struct GutpUserModule;
 
 impl GutpUserModule {
     fn get_one(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV).unwrap();
+        let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded();
-        println!("in handler user params: {:?}", params);
+        let params = req.parse_urlencoded()?;
 
-        let entity_id = params.get("id").unwrap();
+        let entity_id = params.get("id")?;
 
-        // construct a sql statement
-        let (sql_statement, sql_params) =
-            GutpUser::build_get_one_sql_and_params(entity_id.as_str());
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params).unwrap();
-        println!("in handler user rowset: {:?}", rowset);
+        let (sql, sql_params) = GutpUser::build_get_by_id(entity_id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
 
-        // convert the raw vec[u8] to every rust struct filed, and convert the whole into a
-        // rust struct vec, later we may find a gerneral type converter way
         let mut results: Vec<GutpUser> = vec![];
         for row in rowset.rows {
             let article = GutpUser::from_row(row);
             results.push(article);
         }
-        println!("in handler user results: {:?}", results);
 
         let info = Info {
             model_name: GutpUser::model_name(),
-            action: "get_one".to_string(),
-            target: entity_id.clone(),
+            action: HandlerCRUD::GetOne,
             extra: "".to_string(),
         };
 
-        let response = Response::new(Status::Successful, info, results);
-
-        Ok(response)
+        Ok(Response::new(Status::Successful, info, results))
     }
 
     fn new_user(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV).unwrap();
+        let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded();
+        let params = req.parse_urlencoded()?;
 
-        let account = params.get("account").unwrap();
-        let nickname = params.get("nickname").unwrap();
-        let avatar = params.get("avatar").unwrap();
-        let role = params.get("role").unwrap();
-        let status = params.get("status").unwrap();
-        let pub_settings = params.get("pub_settings").unwrap();
-        let ext = params.get("ext").unwrap();
+        let account = params.get("account")?.to_owned();
+        let nickname = params.get("nickname")?.to_owned();
+        let avatar = params.get("avatar")?.to_owned();
+        let pub_settings = params.get("pub_settings")?.to_owned();
+        let ext = params.get("ext")?.to_owned();
 
-        let id = req.ext().get("random_str").unwrap();
+        let id = req.ext().get("random_str")?.to_owned();
+        let time = req.ext().get("time")?.parse::<i64>()?;
 
-        // construct a struct
         let article = GutpUser {
-            id: id.clone(),
-            account: account.clone(),
-            nickname: nickname.clone(),
-            avatar: avatar.clone(),
-            role: role.parse::<i64>().unwrap(),
-            status: status.parse::<i64>().unwrap(),
-            signup_time: 0,
-            pub_settings: pub_settings.clone(),
-            ext: ext.clone(),
+            id,
+            account,
+            nickname,
+            avatar,
+            role: GutpUserRole::Normal,
+            status: GutpUserStatus::Normal,
+            signup_time: time,
+            pub_settings,
+            ext,
         };
 
-        // construct a sql statement and param
-        let (sql_statement, sql_params) = article.build_insert_sql_and_params();
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params);
-        println!(
-            "in handler article_new: _execute_results: {:?}",
-            _execute_results
-        );
+        let (sql, sql_params) = article.build_insert();
+        _ = pg::execute(&pg_addr, &sql, &sql_params);
 
         let results: Vec<GutpUser> = vec![article];
 
         let info = Info {
             model_name: GutpUser::model_name(),
-            action: "new".to_string(),
-            target: id.clone(),
+            action: HandlerCRUD::Create,
             extra: "".to_string(),
         };
 
-        let response = Response::new(Status::Successful, info, results);
-
-        Ok(response)
+        Ok(Response::new(Status::Successful, info, results))
     }
 
     fn update(req: &mut Request) -> Result<Response> {
@@ -112,79 +94,76 @@ impl GutpUserModule {
 
         let params = req.parse_urlencoded();
 
-        let id = params.get("id").unwrap();
-        let account = params.get("account").unwrap();
-        let nickname = params.get("nickname").unwrap();
-        let avatar = params.get("avatar").unwrap();
-        let role = params.get("role").unwrap();
-        let status = params.get("status").unwrap();
-        let pub_settings = params.get("pub_settings").unwrap();
-        let ext = params.get("ext").unwrap();
+        let id = params.get("id")?;
+        let account = params.get("account")?.to_owned();
+        let nickname = params.get("nickname")?.to_owned();
+        let avatar = params.get("avatar")?.to_owned();
+        let pub_settings = params.get("pub_settings")?.to_owned();
+        let ext = params.get("ext")?.to_owned();
 
-        // construct a struct
-        let article = GutpUser {
-            id: id.clone(),
-            account: account.clone(),
-            nickname: nickname.clone(),
-            avatar: avatar.clone(),
-            role: role.parse::<i64>().unwrap(),
-            status: status.parse::<i64>().unwrap(),
-            signup_time: 0,
-            pub_settings: pub_settings.clone(),
-            ext: ext.clone(),
-        };
+        // get the item from db, check whether obj in db
+        let (sql, sql_params) = GutpUser::build_get_by_id(id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        match rowset.rows.next() {
+            Some(row) => {
+                let old_user = GutpUser::from_row(row);
 
-        // construct a sql statement and params
-        let (sql_statement, sql_params) = article.build_update_sql_and_params();
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params);
+                let user = GutpUser {
+                    account,
+                    nickname,
+                    avatar,
+                    pub_settings,
+                    ext,
+                    ..old_user
+                };
 
-        let results: Vec<GutpUser> = vec![article];
+                let (sql, sql_params) = user.build_update();
+                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
-        let info = Info {
-            model_name: "article".to_string(),
-            action: "update".to_string(),
-            target: id.clone(),
-            extra: "".to_string(),
-        };
+                let results: Vec<GutpUser> = vec![user];
 
-        let response = Response::new(Status::Successful, info, results);
+                let info = Info {
+                    model_name: GutpUser::model_name(),
+                    action: HandlerCRUD::Update,
+                    extra: "".to_string(),
+                };
 
-        Ok(response)
+                Ok(Response::new(Status::Successful, info, results))
+            }
+            None => {
+                bail!("update action: no item in db");
+            }
+        }
     }
 
     fn delete(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV).unwrap();
+        let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded();
+        let params = req.parse_urlencoded()?;
 
-        let id = params.get("id").unwrap();
+        let id = params.get("id")?;
 
-        // construct a sql statement
-        let (sql_statement, sql_params) = GutpUser::build_delete_sql_and_params(id.as_str());
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params);
-        // TODO check the pg result
+        let (sql, sql_params) = GutpUser::build_delete(id);
+        _ = pg::execute(&pg_addr, &sql, &sql_params);
 
         let results: Vec<GutpUser> = vec![];
 
         let info = Info {
             model_name: GutpUser::model_name(),
-            action: "delete".to_string(),
-            target: id.clone(),
+            action: HandlerCRUD::Delete,
             extra: "".to_string(),
         };
 
-        let response = Response::new(Status::Successful, info, results);
-
-        Ok(response)
+        Ok(Response::new(Status::Successful, info, results))
     }
 }
 
 impl Module for GutpUserModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/user/:id", Self::get_one);
-        router.post("/v1/user/new", Self::new_user);
+        router.get("/v1/user", Self::get_one);
+        router.post("/v1/user/create", Self::new_user);
         router.post("/v1/user/update", Self::update);
-        router.post("/v1/user/delete/:id", Self::delete);
+        router.post("/v1/user/delete", Self::delete);
 
         Ok(())
     }

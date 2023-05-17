@@ -27,7 +27,7 @@ enum GutpPostWeight {
     SuperLow = -3,
     High = 1,
     VeryHigh = 2,
-    SuperHigh = 2,
+    SuperHigh = 3,
 }
 
 pub struct GutpPostModule;

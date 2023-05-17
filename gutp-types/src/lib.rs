@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use spin_sdk::pg::{DbValue, Decode, ParameterValue};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
-struct GutpUser {
+pub struct GutpUser {
     id: String,
     account: String,
     nickname: String,
@@ -17,12 +17,12 @@ struct GutpUser {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
-struct GutpSubspace {
+pub struct GutpSubspace {
     id: String,
     title: String,
     description: String,
     banner: String,
-    owner: String,
+    owner_id: String,
     profession: String,
     appid: String,
     is_public: bool,
@@ -31,7 +31,8 @@ struct GutpSubspace {
     created_time: i64,
 }
 
-struct GutpPost {
+#[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
+pub struct GutpPost {
     id: String,
     title: String,
     content: String,
@@ -47,7 +48,8 @@ struct GutpPost {
     updated_time: i64,
 }
 
-struct GutpComment {
+#[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
+pub struct GutpComment {
     id: String,
     content: String,
     author_id: String,
@@ -59,7 +61,8 @@ struct GutpComment {
     created_time: i64,
 }
 
-struct GutpTag {
+#[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
+pub struct GutpTag {
     id: String,
     caption: String,
     subspace_id: String,
@@ -69,27 +72,30 @@ struct GutpTag {
     created_time: i64,
 }
 
-struct GutpPostTag {
+#[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
+pub struct GutpPostTag {
     id: String,
     post_id: String,
     tag_id: String,
     created_time: i64,
 }
 
-struct GutpModerator {
+#[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
+pub struct GutpPostDiff {
+    id: String,
+    post_id: String,
+    diff: String,
+    version_num: i32,
+    created_time: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
+pub struct GutpModerator {
     id: String,
     user_id: String,
     is_subspace_moderator: bool,
     subspace_id: String,
     tag_id: String,
     permission_level: i16,
-    created_time: i64,
-}
-
-pub struct GutpPostDiff {
-    id: String,
-    post_id: String,
-    diff: String,
-    version_num: i32,
     created_time: i64,
 }

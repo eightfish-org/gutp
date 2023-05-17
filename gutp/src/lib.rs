@@ -12,6 +12,7 @@ mod postdiff;
 mod posttag;
 mod subspace;
 mod tag;
+mod user;
 
 struct MyGlobalFilter;
 
@@ -28,6 +29,7 @@ impl GlobalFilter for MyGlobalFilter {
 pub fn build_app() -> EightFishApp {
     let mut sapp = EightFishApp::new();
     sapp.add_global_filter(Box::new(MyGlobalFilter))
+        .add_module(Box::new(user::GutpUserModule))
         .add_module(Box::new(comment::GutpCommentModule))
         .add_module(Box::new(moderator::GutpModeratorModule))
         .add_module(Box::new(post::GutpPostModule))

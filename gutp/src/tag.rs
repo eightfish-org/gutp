@@ -4,7 +4,8 @@ use eightfish::{
 };
 use eightfish_derive::EightFishModel;
 use serde::{Deserialize, Serialize};
-use spin_sdk::pg;
+use spin_sdk::pg::{self, ParameterValue};
+use sql_builder::SqlBuilder;
 
 const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
@@ -12,7 +13,7 @@ const PAGESIZE: u64 = 25;
 
 use gutp_types::GutpTag;
 
-const GutpTagWeightDefault: i32 = 0;
+const GUTP_TAG_WEIGHT_DEFAULT: i32 = 0;
 
 pub struct GutpTagModule;
 
@@ -23,8 +24,8 @@ impl GutpTagModule {
         let params = req.parse_urlencoded()?;
         let tag_id = params.get("id")?;
 
-        let (sql_statement, sql_params) = GutpTag::build_get_one_sql_and_params(tag_id);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpTag::build_get_by_id(tag_id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
 
         let results = if let Some(row) = rowset.rows.next() {
             vec![GutpTag::from_row(row)]
@@ -50,8 +51,13 @@ impl GutpTagModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) = GutpTag::build_get_list_sql_and_params(offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpTag::model_name())
+            .fields(&GutpTag::fields())
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let rowset = pg::query(&pg_addr, &sql, &[])?;
 
         let mut results: Vec<GutpTag> = vec![];
         for row in rowset.rows {
@@ -78,9 +84,15 @@ impl GutpTagModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpTag::build_get_list_by_sql_and_params("subspace_id", subspace_id, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpTag::model_name())
+            .fields(&GutpTag::fields())
+            .and_where_eq("subspace_id", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(subspace_id);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpTag> = vec![];
         for row in rowset.rows {
@@ -107,9 +119,15 @@ impl GutpTagModule {
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
-        let (sql_statement, sql_params) =
-            GutpTag::build_get_list_by_sql_and_params("creator_id", creator_id, offset, limit);
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let sql = SqlBuilder::select_from(&GutpTag::model_name())
+            .fields(&GutpTag::fields())
+            .and_where_eq("creator_id", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(creator_id);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpTag> = vec![];
         for row in rowset.rows {
@@ -145,13 +163,12 @@ impl GutpTagModule {
             subspace_id,
             creator_id,
             is_public,
-            weight: GutpTagWeightDefault,
+            weight: GUTP_TAG_WEIGHT_DEFAULT,
             created_time: time,
         };
 
-        // construct a sql statement and param
-        let (sql_statement, sql_params) = tag.build_insert_sql_and_params();
-        let _execute_results = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = tag.build_insert();
+        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
         let results: Vec<GutpTag> = vec![tag];
 
@@ -176,8 +193,8 @@ impl GutpTagModule {
         let is_public = params.get("is_public")?.parse::<bool>()?;
 
         // get the item from db, check whether obj in db
-        let (sql_statement, sql_params) = GutpTag::build_get_one_sql_and_params(id.as_str());
-        let rowset = pg::query(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpTag::build_get_by_id(id);
+        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
         match rowset.rows.next() {
             Some(row) => {
                 let old_tag = GutpTag::from_row(row);
@@ -190,8 +207,8 @@ impl GutpTagModule {
                     ..old_tag
                 };
 
-                let (sql_statement, sql_params) = tag.build_update_sql_and_params();
-                let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+                let (sql, sql_params) = tag.build_update();
+                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
                 let results: Vec<GutpTag> = vec![tag];
 
@@ -216,8 +233,8 @@ impl GutpTagModule {
 
         let id = params.get("id")?;
 
-        let (sql_statement, sql_params) = GutpTag::build_delete_sql_and_params(id.as_str());
-        let _er = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        let (sql, sql_params) = GutpTag::build_delete(id);
+        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
 
         let info = Info {
             model_name: GutpTag::model_name(),

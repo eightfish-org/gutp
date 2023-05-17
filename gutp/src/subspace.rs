@@ -97,19 +97,19 @@ impl GutpSubspaceModule {
         let params = req.parse_urlencoded()?;
         // println!("in handler subspace get_one: params: {:?}", params);
 
-        let owner = params.get("owner")?;
+        let owner_id = params.get("owner_id")?;
         let page = params.get("page").unwrap_or(0);
         let limit = params.get("pagesize").unwrap_or(PAGESIZE);
         let offset = page * limit;
 
         let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
             .fields(&GutpSubspace::fields())
-            .and_where_eq("owner", "$1")
+            .and_where_eq("owner_id", "$1")
             .order_desc("created_time")
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(owner);
+        let sql_param = ParameterValue::Str(owner_id);
         let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
         let mut results: Vec<GutpSubspace> = vec![];
@@ -206,7 +206,7 @@ impl GutpSubspaceModule {
         let title = params.get("title")?.to_owned();
         let description = params.get("description")?.to_owned();
         let banner = params.get("banner")?.to_owned();
-        let owner = params.get("owner")?.to_owned();
+        let owner_id = params.get("owner_id")?.to_owned();
         let profession = params.get("profession")?.to_owned();
         let appid = params.get("appid")?.to_owned();
         let is_public = params.get("is_public")?.parse::<bool>()?;
@@ -219,7 +219,7 @@ impl GutpSubspaceModule {
             title,
             description,
             banner,
-            owner,
+            owner_id,
             profession,
             appid,
             is_public,
@@ -251,7 +251,7 @@ impl GutpSubspaceModule {
         let title = params.get("title")?.to_owned();
         let description = params.get("description")?.to_owned();
         let banner = params.get("banner")?.to_owned();
-        let owner = params.get("owner")?.to_owned();
+        let owner_id = params.get("owner_id")?.to_owned();
         let profession = params.get("profession")?.to_owned();
         let appid = params.get("appid")?.to_owned();
         let is_public = params.get("is_public")?.parse::<bool>()?;
@@ -268,7 +268,7 @@ impl GutpSubspaceModule {
                     title,
                     description,
                     banner,
-                    owner,
+                    owner_id,
                     profession,
                     appid,
                     is_public,
