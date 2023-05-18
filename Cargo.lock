@@ -160,6 +160,10 @@ version = "0.1.0"
 dependencies = [
  "eightfish",
  "eightfish-derive",
+ "json-digest",
+ "serde",
+ "serde_json",
+ "spin-sdk",
 ]
 
 [[package]]
