@@ -82,6 +82,7 @@ CREATE TABLE gutptag (
   caption varchar not null,
   subspace_id varchar not null,		  -- which subspace a tag belongs to
   creator_id varchar not null,
+  is_subspace_tag boolean not null,
   is_public boolean not null,
   weight smallint not null,		      -- weight for system level tag, or customized tag
   created_time bigint not null

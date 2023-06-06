@@ -67,6 +67,7 @@ pub struct GutpTag {
     caption: String,
     subspace_id: String,
     creator_id: String,
+    is_subspace_tag: bool,
     is_public: bool,
     weight: i16,
     created_time: i64,
