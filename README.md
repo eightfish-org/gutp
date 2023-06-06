@@ -11,5 +11,5 @@ This project aims to give a reference implimentation for the GUTP backend servic
 
 The frontend should be put into another project. This backend could potentially support multiple frontends, or multiple different apps.
 
-The initial idea is to support a forum app, a blog app.
+The initial idea is to support a forum app, a blog, a technical social app.
 
