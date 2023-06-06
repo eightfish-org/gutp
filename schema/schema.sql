@@ -137,7 +137,7 @@ CREATE TABLE gutppostdiff_idhash (
 CREATE TABLE gutpext (
   id varchar primary key,
   caption varchar not null,
-  link varchar not null,
+  content varchar not null,
   subspace_id varchar not null,		  -- which subspace a tag belongs to
   tag_id varchar not null,		  -- which tag belongs to
   creator_id varchar not null,

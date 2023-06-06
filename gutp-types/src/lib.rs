@@ -105,7 +105,7 @@ pub struct GutpModerator {
 pub struct GutpExt {
     id: String,
     caption: String,
-    link: String,
+    content: String,
     subspace_id: String,
     tag_id: String,
     creator_id: String,
