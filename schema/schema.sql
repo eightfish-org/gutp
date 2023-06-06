@@ -133,6 +133,23 @@ CREATE TABLE gutppostdiff_idhash (
   id varchar primary key,		-- this idhash pair requires the id field must be unique
   hash varchar not null
 );
+
+CREATE TABLE gutpext (
+  id varchar primary key,
+  caption varchar not null,
+  link varchar not null,
+  subspace_id varchar not null,		  -- which subspace a tag belongs to
+  tag_id varchar not null,		  -- which tag belongs to
+  creator_id varchar not null,
+  is_subspace_ext boolean not null,
+  weight smallint not null,		      -- weight for system level tag, or customized tag
+  created_time bigint not null
+);
+
+CREATE TABLE gutpext_idhash (
+  id varchar primary key,
+  hash varchar not null
+);
 ---------------------------------
 ---------  Social Part ----------
 

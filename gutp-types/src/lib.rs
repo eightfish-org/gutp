@@ -100,3 +100,16 @@ pub struct GutpModerator {
     permission_level: i16,
     created_time: i64,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
+pub struct GutpExt {
+    id: String,
+    caption: String,
+    link: String,
+    subspace_id: String,
+    tag_id: String,
+    creator_id: String,
+    is_subspace_ext: bool,
+    weight: i16,
+    created_time: i64,
+}
