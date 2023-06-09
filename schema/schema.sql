@@ -134,7 +134,7 @@ CREATE TABLE gutppostdiff_idhash (
   hash varchar not null
 );
 
-CREATE TABLE gutpext (
+CREATE TABLE gutpextobj (
   id varchar primary key,
   caption varchar not null,
   content varchar not null,
@@ -146,7 +146,7 @@ CREATE TABLE gutpext (
   created_time bigint not null
 );
 
-CREATE TABLE gutpext_idhash (
+CREATE TABLE gutpextobj_idhash (
   id varchar primary key,
   hash varchar not null
 );

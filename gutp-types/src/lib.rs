@@ -102,7 +102,7 @@ pub struct GutpModerator {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
-pub struct GutpExt {
+pub struct GutpExtobj {
     id: String,
     caption: String,
     content: String,
