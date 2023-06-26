@@ -90,6 +90,7 @@ dependencies = [
 [[package]]
 name = "eightfish"
 version = "0.1.0"
+source = "git+https://github.com/eightfish-org/eightfish#94cb7f73d6cf9074431e5c9eb28b38e219159a95"
 dependencies = [
  "anyhow",
  "form_urlencoded",
@@ -101,6 +102,7 @@ dependencies = [
 [[package]]
 name = "eightfish-derive"
 version = "0.1.0"
+source = "git+https://github.com/eightfish-org/eightfish#94cb7f73d6cf9074431e5c9eb28b38e219159a95"
 dependencies = [
  "json-digest",
  "proc-macro2",
@@ -432,6 +434,7 @@ dependencies = [
 [[package]]
 name = "spin_worker"
 version = "0.1.0"
+source = "git+https://github.com/eightfish-org/eightfish#94cb7f73d6cf9074431e5c9eb28b38e219159a95"
 dependencies = [
  "anyhow",
  "bs58",
