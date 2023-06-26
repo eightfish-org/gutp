@@ -166,6 +166,7 @@ dependencies = [
  "serde",
  "serde_json",
  "spin-sdk",
+ "sql-builder",
 ]
 
 [[package]]

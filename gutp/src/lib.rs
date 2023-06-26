@@ -6,6 +6,7 @@ use spin_sdk::redis_component;
 use eightfish::{App as EightFishApp, GlobalFilter, Request, Response, Result as EightFishResult};
 
 mod comment;
+mod constants;
 mod moderator;
 mod post;
 mod postdiff;
@@ -13,6 +14,7 @@ mod posttag;
 mod subspace;
 mod tag;
 mod user;
+mod utils;
 
 struct MyGlobalFilter;
 

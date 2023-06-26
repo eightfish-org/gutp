@@ -1,4 +1,6 @@
-use anyhow::bail;
+use std::any;
+
+use anyhow::{anyhow, bail};
 use eightfish::{
     EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
 };
@@ -7,10 +9,9 @@ use serde::{Deserialize, Serialize};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
 
-const REDIS_URL_ENV: &str = "REDIS_URL";
-const DB_URL_ENV: &str = "DB_URL";
-const PAGESIZE: u64 = 25;
+use crate::constants::DB_URL_ENV;
 
+use crate::utils;
 use gutp_types::GutpSubspace;
 
 enum GutpSubspaceStatus {
@@ -27,7 +28,7 @@ enum GutpSubspaceWeight {
     SuperLow = -3,
     High = 1,
     VeryHigh = 2,
-    SuperHigh = 2,
+    SuperHigh = 3,
 }
 
 pub struct GutpSubspaceModule;
@@ -38,7 +39,7 @@ impl GutpSubspaceModule {
 
         let params = req.parse_urlencoded()?;
 
-        let subspace_id = params.get("id")?;
+        let subspace_id = params.get("id").ok_or(anyhow!("no id"))?;
 
         let (sql, sql_params) = GutpSubspace::build_get_by_id(subspace_id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
@@ -64,10 +65,7 @@ impl GutpSubspaceModule {
 
         let params = req.parse_urlencoded()?;
 
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
-
+        let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
             .fields(&GutpSubspace::fields())
             .order_desc("created_time")
@@ -97,11 +95,11 @@ impl GutpSubspaceModule {
         let params = req.parse_urlencoded()?;
         // println!("in handler subspace get_one: params: {:?}", params);
 
-        let owner_id = params.get("owner_id")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let owner_id = params
+            .get("owner_id")
+            .ok_or(anyhow!("owner_id is required"))?;
 
+        let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
             .fields(&GutpSubspace::fields())
             .and_where_eq("owner_id", "$1")
@@ -133,11 +131,11 @@ impl GutpSubspaceModule {
         let params = req.parse_urlencoded()?;
         // println!("in handler subspace get_one: params: {:?}", params);
 
-        let profession = params.get("profession")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let profession = params
+            .get("profession")
+            .ok_or(anyhow!("profession is required"))?;
 
+        let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
             .fields(&GutpSubspace::fields())
             .and_where_eq("profession", "$1")
@@ -168,11 +166,9 @@ impl GutpSubspaceModule {
 
         let params = req.parse_urlencoded()?;
 
-        let appid = params.get("appid")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let appid = params.get("appid").ok_or(anyhow!("appid is required"))?;
 
+        let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
             .fields(&GutpSubspace::fields())
             .and_where_eq("appid", "$1")
@@ -203,16 +199,45 @@ impl GutpSubspaceModule {
 
         let params = req.parse_urlencoded()?;
 
-        let title = params.get("title")?.to_owned();
-        let description = params.get("description")?.to_owned();
-        let banner = params.get("banner")?.to_owned();
-        let owner_id = params.get("owner_id")?.to_owned();
-        let profession = params.get("profession")?.to_owned();
-        let appid = params.get("appid")?.to_owned();
-        let is_public = params.get("is_public")?.parse::<bool>()?;
+        let title = params
+            .get("title")
+            .ok_or(anyhow!("missing title"))?
+            .to_owned();
+        let description = params
+            .get("description")
+            .ok_or(anyhow!("missing description"))?
+            .to_owned();
+        let banner = params
+            .get("banner")
+            .ok_or(anyhow!("missing banner"))?
+            .to_owned();
+        let owner_id = params
+            .get("owner_id")
+            .ok_or(anyhow!("missing owner_id"))?
+            .to_owned();
+        let profession = params
+            .get("profession")
+            .ok_or(anyhow!("missing profession"))?
+            .to_owned();
+        let appid = params
+            .get("appid")
+            .ok_or(anyhow!("missing appid"))?
+            .to_owned();
+        let is_public = params
+            .get("is_public")
+            .ok_or(anyhow!("missing is_public"))?
+            .parse::<bool>()?;
 
-        let id = req.ext().get("random_str")?.to_owned();
-        let time = req.ext().get("time")?.parse::<i64>()?;
+        let id = req
+            .ext()
+            .get("random_str")
+            .ok_or(anyhow!("failed generate id"))?
+            .to_owned();
+        let time = req
+            .ext()
+            .get("time")
+            .ok_or(anyhow!("failed get time"))?
+            .parse::<i64>()?;
 
         let subspace = GutpSubspace {
             id,
@@ -223,8 +248,8 @@ impl GutpSubspaceModule {
             profession,
             appid,
             is_public,
-            status: GutpSubspaceStatus::Normal,
-            weight: GutpSubspaceWeight::Normal,
+            status: GutpSubspaceStatus::Normal as i16,
+            weight: GutpSubspaceWeight::Normal as i16,
             created_time: time,
         };
 
@@ -247,19 +272,40 @@ impl GutpSubspaceModule {
 
         let params = req.parse_urlencoded()?;
 
-        let id = params.get("id")?;
-        let title = params.get("title")?.to_owned();
-        let description = params.get("description")?.to_owned();
-        let banner = params.get("banner")?.to_owned();
-        let owner_id = params.get("owner_id")?.to_owned();
-        let profession = params.get("profession")?.to_owned();
-        let appid = params.get("appid")?.to_owned();
-        let is_public = params.get("is_public")?.parse::<bool>()?;
+        let id = params.get("id").ok_or(anyhow!("id is required"))?;
+        let title = params
+            .get("title")
+            .ok_or(anyhow!("title is required"))?
+            .to_owned();
+        let description = params
+            .get("description")
+            .ok_or(anyhow!("description is required"))?
+            .to_owned();
+        let banner = params
+            .get("banner")
+            .ok_or(anyhow!("banner is required"))?
+            .to_owned();
+        let owner_id = params
+            .get("owner_id")
+            .ok_or(anyhow!("owner_id is required"))?
+            .to_owned();
+        let profession = params
+            .get("profession")
+            .ok_or(anyhow!("profession is required"))?
+            .to_owned();
+        let appid = params
+            .get("appid")
+            .ok_or(anyhow!("appid is required"))?
+            .to_owned();
+        let is_public = params
+            .get("is_public")
+            .ok_or(anyhow!("is_public is required"))?
+            .parse::<bool>()?;
 
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpSubspace::build_get_by_id(id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
-        match rowset.rows.next() {
+        match rowset.rows.into_iter().next() {
             Some(row) => {
                 let old_subspace = GutpSubspace::from_row(row);
 
@@ -299,7 +345,7 @@ impl GutpSubspaceModule {
 
         let params = req.parse_urlencoded()?;
 
-        let id = params.get("id")?;
+        let id = params.get("id").ok_or(anyhow!("missing id"))?;
 
         let (sql_statement, sql_params) = GutpSubspace::build_delete(id);
         _ = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
