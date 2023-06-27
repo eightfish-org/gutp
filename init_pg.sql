@@ -1,4 +1,4 @@
-CREATE TABLE gutp_user (
+CREATE TABLE gutpuser (
     id TEXT PRIMARY KEY,
     account TEXT NOT NULL,
     nickname TEXT NOT NULL,
@@ -9,8 +9,12 @@ CREATE TABLE gutp_user (
     pub_settings TEXT NOT NULL,
     ext TEXT NOT NULL
 );
+CREATE TABLE gutpuser_idhash (
+	id varchar PRIMARY KEY,
+	hash varchar NOT NULL
+);
 
-CREATE TABLE gutp_subspace (
+CREATE TABLE gutpsubspace (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
@@ -23,8 +27,12 @@ CREATE TABLE gutp_subspace (
     weight SMALLINT NOT NULL,
     created_time BIGINT NOT NULL
 );
+CREATE TABLE gutpsubspace_idhash (
+	id varchar PRIMARY KEY,
+	hash varchar NOT NULL
+);
 
-CREATE TABLE gutp_post (
+CREATE TABLE gutppost (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
@@ -39,8 +47,12 @@ CREATE TABLE gutp_post (
     created_time BIGINT NOT NULL,
     updated_time BIGINT NOT NULL
 );
+CREATE TABLE gutppost_idhash (
+	id varchar PRIMARY KEY,
+	hash varchar NOT NULL
+);
 
-CREATE TABLE gutp_comment (
+CREATE TABLE gutpcomment (
     id TEXT PRIMARY KEY,
     content TEXT NOT NULL,
     author_id TEXT NOT NULL,
@@ -51,8 +63,12 @@ CREATE TABLE gutp_comment (
     weight INTEGER NOT NULL,
     created_time BIGINT NOT NULL
 );
+CREATE TABLE gutpcomment_idhash (
+	id varchar PRIMARY KEY,
+	hash varchar NOT NULL
+);
 
-CREATE TABLE gutp_tag (
+CREATE TABLE gutptag (
     id TEXT PRIMARY KEY,
     caption TEXT NOT NULL,
     subspace_id TEXT NOT NULL,
@@ -62,23 +78,35 @@ CREATE TABLE gutp_tag (
     weight SMALLINT NOT NULL,
     created_time BIGINT NOT NULL
 );
+CREATE TABLE gutptag_idhash (
+	id varchar PRIMARY KEY,
+	hash varchar NOT NULL
+);
 
-CREATE TABLE gutp_post_tag (
+CREATE TABLE gutpposttag (
     id TEXT PRIMARY KEY,
     post_id TEXT NOT NULL,
     tag_id TEXT NOT NULL,
     created_time BIGINT NOT NULL
 );
+CREATE TABLE gutpposttag_idhash (
+	id varchar PRIMARY KEY,
+	hash varchar NOT NULL
+);
 
-CREATE TABLE gutp_post_diff (
+CREATE TABLE gutppostdiff (
     id TEXT PRIMARY KEY,
     post_id TEXT NOT NULL,
     diff TEXT NOT NULL,
     version_num INTEGER NOT NULL,
     created_time BIGINT NOT NULL
 );
+CREATE TABLE gutppostdiff_idhash (
+	id varchar PRIMARY KEY,
+	hash varchar NOT NULL
+);
 
-CREATE TABLE gutp_moderator (
+CREATE TABLE gutpmoderator (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     is_subspace_moderator BOOLEAN NOT NULL,
@@ -87,8 +115,12 @@ CREATE TABLE gutp_moderator (
     permission_level SMALLINT NOT NULL,
     created_time BIGINT NOT NULL
 );
+CREATE TABLE gutpmoderator_idhash (
+	id varchar PRIMARY KEY,
+	hash varchar NOT NULL
+);
 
-CREATE TABLE gutp_extobj (
+CREATE TABLE gutpextobj (
     id TEXT PRIMARY KEY,
     caption TEXT NOT NULL,
     content TEXT NOT NULL,
@@ -98,4 +130,8 @@ CREATE TABLE gutp_extobj (
     is_subspace_ext BOOLEAN NOT NULL,
     weight SMALLINT NOT NULL,
     created_time BIGINT NOT NULL
+);
+CREATE TABLE gutpextobj_idhash (
+	id varchar PRIMARY KEY,
+	hash varchar NOT NULL
 );
