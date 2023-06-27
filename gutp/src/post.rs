@@ -1,4 +1,5 @@
-use anyhow::bail;
+use crate::utils;
+use anyhow::{anyhow, bail};
 use eightfish::{
     EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
 };
@@ -6,7 +7,6 @@ use eightfish_derive::EightFishModel;
 use serde::{Deserialize, Serialize};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
-
 const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
 const PAGESIZE: u64 = 25;
@@ -37,12 +37,12 @@ impl GutpPostModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        let post_id = params.get("id")?;
+        let post_id = params.get("id").ok_or(anyhow!("id is required"))?;
 
-        let (sql, sql_params) = GutpPost::build_get_one(post_id);
+        let (sql, sql_params) = GutpPost::build_get_by_id(post_id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
 
-        let results = if let Some(row) = rowset.rows.next() {
+        let results = if let Some(row) = rowset.rows.into_iter().next() {
             vec![GutpPost::from_row(row)]
         } else {
             return bail!("no this item".to_string());
@@ -62,9 +62,7 @@ impl GutpPostModule {
 
         let params = req.parse_urlencoded()?;
 
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let (limit, offset) = utils::build_page_info(&params)?;
 
         let sql = SqlBuilder::select_from(&GutpPost::model_name())
             .fields(&GutpPost::fields())
@@ -94,10 +92,10 @@ impl GutpPostModule {
 
         let params = req.parse_urlencoded()?;
 
-        let subspace_id = params.get("subspace_id")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let subspace_id = params
+            .get("subspace_id")
+            .ok_or(anyhow!("subspace_id is required"))?;
+        let (limit, offset) = utils::build_page_info(&params)?;
 
         let sql = SqlBuilder::select_from(&GutpPost::model_name())
             .fields(&GutpPost::fields())
@@ -129,10 +127,10 @@ impl GutpPostModule {
 
         let params = req.parse_urlencoded()?;
 
-        let author_id = params.get("author_id")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let author_id = params
+            .get("author_id")
+            .ok_or(anyhow!("author_id is required"))?;
+        let (limit, offset) = utils::build_page_info(&params)?;
 
         let sql = SqlBuilder::select_from(&GutpPost::model_name())
             .fields(&GutpPost::fields())
@@ -164,10 +162,10 @@ impl GutpPostModule {
 
         let params = req.parse_urlencoded()?;
 
-        let profession = params.get("profession")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let profession = params
+            .get("profession")
+            .ok_or(anyhow!("profession is required"))?;
+        let (limit, offset) = utils::build_page_info(&params)?;
 
         let sql = SqlBuilder::select_from(&GutpPost::model_name())
             .fields(&GutpPost::fields())
@@ -199,10 +197,8 @@ impl GutpPostModule {
 
         let params = req.parse_urlencoded()?;
 
-        let appid = params.get("appid")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let appid = params.get("appid").ok_or(anyhow!("appid is required"))?;
+        let (limit, offset) = utils::build_page_info(&params)?;
 
         let sql = SqlBuilder::select_from(&GutpPost::model_name())
             .fields(&GutpPost::fields())
@@ -234,17 +230,49 @@ impl GutpPostModule {
 
         let params = req.parse_urlencoded()?;
 
-        let title = params.get("title")?.to_owned();
-        let content = params.get("content")?.to_owned();
-        let author_id = params.get("author_id")?.to_owned();
-        let subspace_id = params.get("subspace_id")?.to_owned();
-        let extlink = params.get("extlink")?.to_owned();
-        let profession = params.get("profession")?.to_owned();
-        let appid = params.get("appid")?.to_owned();
-        let is_public = params.get("is_public")?.parse::<bool>()?;
+        let title = params
+            .get("title")
+            .ok_or(anyhow!("title is required"))?
+            .to_owned();
+        let content = params
+            .get("content")
+            .ok_or(anyhow!("content is required"))?
+            .to_owned();
+        let author_id = params
+            .get("author_id")
+            .ok_or(anyhow!("author_id is required"))?
+            .to_owned();
+        let subspace_id = params
+            .get("subspace_id")
+            .ok_or(anyhow!("subspace_id is required"))?
+            .to_owned();
+        let extlink = params
+            .get("extlink")
+            .ok_or(anyhow!("extlink is required"))?
+            .to_owned();
+        let profession = params
+            .get("profession")
+            .ok_or(anyhow!("profession is required"))?
+            .to_owned();
+        let appid = params
+            .get("appid")
+            .ok_or(anyhow!("appid is required"))?
+            .to_owned();
+        let is_public = params
+            .get("is_public")
+            .ok_or(anyhow!("is_public is required"))?
+            .parse::<bool>()?;
 
-        let id = req.ext().get("random_str")?.to_owned();
-        let time = req.ext().get("time")?.parse::<i64>()?;
+        let id = req
+            .ext()
+            .get("random_str")
+            .ok_or(anyhow!("generate id failed"))?
+            .to_owned();
+        let time = req
+            .ext()
+            .get("time")
+            .ok_or(anyhow!("generate time failed"))?
+            .parse::<i64>()?;
 
         let post = GutpPost {
             id,
@@ -256,8 +284,8 @@ impl GutpPostModule {
             profession,
             appid,
             is_public,
-            status: GutpPostStatus::Normal,
-            weight: GutpPostWeight::Normal,
+            status: GutpPostStatus::Normal as i16,
+            weight: GutpPostWeight::Normal as i16,
             created_time: time,
             updated_time: time,
         };
@@ -281,20 +309,44 @@ impl GutpPostModule {
 
         let params = req.parse_urlencoded()?;
 
-        let id = params.get("id")?;
-        let title = params.get("title")?.to_owned();
-        let content = params.get("content")?.to_owned();
-        let author_id = params.get("author_id")?.to_owned();
-        let subspace_id = params.get("subspace_id")?.to_owned();
-        let extlink = params.get("extlink")?.to_owned();
-        let profession = params.get("profession")?.to_owned();
-        let appid = params.get("appid")?.to_owned();
-        let is_public = params.get("is_public")?.parse::<bool>()?;
+        let id = params.get("id").ok_or(anyhow!("id is required"))?;
+        let title = params
+            .get("title")
+            .ok_or(anyhow!("title is required"))?
+            .to_owned();
+        let content = params
+            .get("content")
+            .ok_or(anyhow!("contnet is required"))?
+            .to_owned();
+        let author_id = params
+            .get("author_id")
+            .ok_or(anyhow!("author_id is required"))?
+            .to_owned();
+        let subspace_id = params
+            .get("subspace_id")
+            .ok_or(anyhow!("subspace_id is required"))?
+            .to_owned();
+        let extlink = params
+            .get("extlink")
+            .ok_or(anyhow!("extlink is required"))?
+            .to_owned();
+        let profession = params
+            .get("profession")
+            .ok_or(anyhow!("profession is required"))?
+            .to_owned();
+        let appid = params
+            .get("appid")
+            .ok_or(anyhow!("appid is required"))?
+            .to_owned();
+        let is_public = params
+            .get("is_public")
+            .ok_or(anyhow!("is_public is required"))?
+            .parse::<bool>()?;
 
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpPost::build_get_by_id(id.as_str());
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
-        match rowset.rows.next() {
+        match rowset.rows.into_iter().next() {
             Some(row) => {
                 let old_post = GutpPost::from_row(row);
 
@@ -334,7 +386,7 @@ impl GutpPostModule {
 
         let params = req.parse_urlencoded()?;
 
-        let id = params.get("id")?;
+        let id = params.get("id").ok_or(anyhow!("id is required"))?;
 
         let (sql, sql_params) = GutpPost::build_delete(id.as_str());
         _ = pg::execute(&pg_addr, &sql, &sql_params)?;

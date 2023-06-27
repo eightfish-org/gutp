@@ -20,13 +20,13 @@ serde = { version = '1.0', default-features = false, features = ['derive'] }
 serde_json = { version = '1.0', default-features = false, features = ['alloc'] }
 json-digest = "0.0.16"
 
-# eightfish = { package = "eightfish", git = "https://github.com/eightfish-org/eightfish", branch = "dev"}
-# eightfish-derive = { package = "eightfish-derive", git = "https://github.com/eightfish-org/eightfish", branch = "dev"}
-# spin_worker = { package = "spin_worker", git = "https://github.com/eightfish-org/eightfish", branch = "dev"}
+eightfish = { package = "eightfish", git = "https://github.com/eightfish-org/eightfish"}
+eightfish-derive = {package = "eightfish-derive", git = "https://github.com/eightfish-org/eightfish"}
+spin_worker = {package = "spin_worker", git = "https://github.com/eightfish-org/eightfish"}
 
-eightfish = {path = "../../eightfish"}
-eightfish-derive = {path = "../../eightfish/eightfish-derive"}
-spin_worker = {path = "../../eightfish/spin_worker"}
+#eightfish = {path = "../../eightfish"}
+#eightfish-derive = {path = "../../eightfish/eightfish-derive"}
+#spin_worker = {path = "../../eightfish/spin_worker"}
 
 gutp-types = {path = "../gutp-types/"}
 sql-builder = "3.1"

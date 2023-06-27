@@ -1,4 +1,6 @@
-use anyhow::bail;
+use std::any;
+
+use anyhow::{anyhow, bail};
 use eightfish::{
     EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
 };
@@ -10,7 +12,7 @@ use sql_builder::SqlBuilder;
 const REDIS_URL_ENV: &str = "REDIS_URL";
 const DB_URL_ENV: &str = "DB_URL";
 const PAGESIZE: u64 = 25;
-
+use crate::utils;
 use gutp_types::GutpPostDiff;
 
 pub struct GutpPostDiffModule;
@@ -20,12 +22,12 @@ impl GutpPostDiffModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        let postdiff_id = params.get("id")?;
+        let postdiff_id = params.get("id").ok_or(anyhow!("postdiff_id is required"))?;
 
         let (sql, sql_params) = GutpPostDiff::build_get_by_id(postdiff_id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
 
-        let results = if let Some(row) = rowset.rows.next() {
+        let results = if let Some(row) = rowset.rows.into_iter().next() {
             vec![GutpPostDiff::from_row(row)]
         } else {
             return bail!("no this item".to_string());
@@ -45,10 +47,7 @@ impl GutpPostDiffModule {
 
         let params = req.parse_urlencoded()?;
 
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
-
+        let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpPostDiff::model_name())
             .fields(&GutpPostDiff::fields())
             .order_desc("created_time")
@@ -77,10 +76,10 @@ impl GutpPostDiffModule {
 
         let params = req.parse_urlencoded()?;
 
-        let post_id = params.get("post_id")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let post_id = params
+            .get("post_id")
+            .ok_or(anyhow!("post_id is required"))?;
+        let (limit, offset) = utils::build_page_info(&params)?;
 
         let sql = SqlBuilder::select_from(&GutpPostDiff::model_name())
             .fields(&GutpPostDiff::fields())
@@ -112,12 +111,29 @@ impl GutpPostDiffModule {
 
         let params = req.parse_urlencoded()?;
 
-        let post_id = params.get("post_id")?.to_owned();
-        let diff = params.get("diff")?.to_owned();
-        let version_num = params.get("version_num")?.parse::<i32>()?;
+        let post_id = params
+            .get("post_id")
+            .ok_or(anyhow!("post_id is required"))?
+            .to_owned();
+        let diff = params
+            .get("diff")
+            .ok_or(anyhow!("diff is required"))?
+            .to_owned();
+        let version_num = params
+            .get("version_num")
+            .ok_or(anyhow!("version_num is required"))?
+            .parse::<i32>()?;
 
-        let id = req.ext().get("random_str")?.to_owned();
-        let time = req.ext().get("time")?.parse::<i64>()?;
+        let id = req
+            .ext()
+            .get("random_str")
+            .ok_or(anyhow!("generate id failed"))?
+            .to_owned();
+        let time = req
+            .ext()
+            .get("time")
+            .ok_or(anyhow!("generate time failed"))?
+            .parse::<i64>()?;
 
         let postdiff = GutpPostDiff {
             id,
@@ -146,15 +162,24 @@ impl GutpPostDiffModule {
 
         let params = req.parse_urlencoded()?;
 
-        let id = params.get("id")?;
-        let post_id = params.get("post_id")?.to_owned();
-        let diff = params.get("diff")?.to_owned();
-        let version_num = params.get("version_num")?.parse::<i32>()?;
+        let id = params.get("id").ok_or(anyhow!("id is required"))?;
+        let post_id = params
+            .get("post_id")
+            .ok_or(anyhow!("post_id is required"))?
+            .to_owned();
+        let diff = params
+            .get("diff")
+            .ok_or(anyhow!("diff is required"))?
+            .to_owned();
+        let version_num = params
+            .get("version_num")
+            .ok_or(anyhow!("version_num is required"))?
+            .parse::<i32>()?;
 
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpPostDiff::build_get_by_id(id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
-        match rowset.rows.next() {
+        match rowset.rows.into_iter().next() {
             Some(row) => {
                 let old_postdiff = GutpPostDiff::from_row(row);
 
@@ -189,7 +214,7 @@ impl GutpPostDiffModule {
 
         let params = req.parse_urlencoded()?;
 
-        let id = params.get("id")?;
+        let id = params.get("id").ok_or(anyhow!("id is required."))?;
 
         let (sql, sql_params) = GutpPostDiff::build_delete(id);
         _ = pg::execute(&pg_addr, &sql, &sql_params)?;

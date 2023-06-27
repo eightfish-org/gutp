@@ -1,4 +1,6 @@
-use anyhow::bail;
+use std::any;
+
+use anyhow::{anyhow, bail};
 use eightfish::{
     EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
 };
@@ -7,13 +9,10 @@ use serde::{Deserialize, Serialize};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
 
-const REDIS_URL_ENV: &str = "REDIS_URL";
-const DB_URL_ENV: &str = "DB_URL";
-const PAGESIZE: u64 = 25;
-
+use crate::constants::DB_URL_ENV;
+use crate::utils;
 use gutp_types::GutpTag;
-
-const GUTP_TAG_WEIGHT_DEFAULT: i32 = 0;
+const GUTP_TAG_WEIGHT_DEFAULT: i16 = 0;
 
 pub struct GutpTagModule;
 
@@ -22,12 +21,12 @@ impl GutpTagModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
         let params = req.parse_urlencoded()?;
-        let tag_id = params.get("id")?;
+        let tag_id = params.get("id").ok_or(anyhow!("id is required"))?;
 
         let (sql, sql_params) = GutpTag::build_get_by_id(tag_id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
 
-        let results = if let Some(row) = rowset.rows.next() {
+        let results = if let Some(row) = rowset.rows.into_iter().next() {
             vec![GutpTag::from_row(row)]
         } else {
             return bail!("no this item".to_string());
@@ -47,10 +46,7 @@ impl GutpTagModule {
 
         let params = req.parse_urlencoded()?;
 
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
-
+        let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpTag::model_name())
             .fields(&GutpTag::fields())
             .order_desc("created_time")
@@ -79,11 +75,11 @@ impl GutpTagModule {
 
         let params = req.parse_urlencoded()?;
 
-        let subspace_id = params.get("subspace_id")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let subspace_id = params
+            .get("subspace_id")
+            .ok_or(anyhow!("subspace_id is required"))?;
 
+        let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpTag::model_name())
             .fields(&GutpTag::fields())
             .and_where_eq("subspace_id", "$1")
@@ -114,11 +110,11 @@ impl GutpTagModule {
 
         let params = req.parse_urlencoded()?;
 
-        let creator_id = params.get("creator_id")?;
-        let page = params.get("page").unwrap_or(0);
-        let limit = params.get("pagesize").unwrap_or(PAGESIZE);
-        let offset = page * limit;
+        let creator_id = params
+            .get("creator_id")
+            .ok_or(anyhow!("creator_id is required"))?;
 
+        let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpTag::model_name())
             .fields(&GutpTag::fields())
             .and_where_eq("creator_id", "$1")
@@ -149,19 +145,44 @@ impl GutpTagModule {
 
         let params = req.parse_urlencoded()?;
 
-        let caption = params.get("caption")?.to_owned();
-        let subspace_id = params.get("subspace_id")?.to_owned();
-        let creator_id = params.get("creator_id")?.to_owned();
-        let is_public = params.get("is_public")?.parse::<bool>()?;
+        let caption = params
+            .get("caption")
+            .ok_or(anyhow!("caption is required"))?
+            .to_owned();
+        let subspace_id = params
+            .get("subspace_id")
+            .ok_or(anyhow!("subspace_id is required"))?
+            .to_owned();
+        let creator_id = params
+            .get("creator_id")
+            .ok_or(anyhow!("creator_id is required"))?
+            .to_owned();
+        let is_subspace_tag = params
+            .get("is_subspace_tag")
+            .ok_or(anyhow!("is_subspace_tag is required"))?
+            .parse::<bool>()?;
+        let is_public = params
+            .get("is_public")
+            .ok_or(anyhow!("is_public is required"))?
+            .parse::<bool>()?;
 
-        let id = req.ext().get("random_str")?.to_owned();
-        let time = req.ext().get("time")?.parse::<i64>()?;
+        let id = req
+            .ext()
+            .get("random_str")
+            .ok_or(anyhow!("generate id failed"))?
+            .to_owned();
+        let time = req
+            .ext()
+            .get("time")
+            .ok_or(anyhow!("get time failed"))?
+            .parse::<i64>()?;
 
         let tag = GutpTag {
             id,
             caption,
             subspace_id,
             creator_id,
+            is_subspace_tag,
             is_public,
             weight: GUTP_TAG_WEIGHT_DEFAULT,
             created_time: time,
@@ -186,16 +207,28 @@ impl GutpTagModule {
 
         let params = req.parse_urlencoded()?;
 
-        let id = params.get("id")?;
-        let caption = params.get("caption")?.to_owned();
-        let subspace_id = params.get("subspace_id")?.to_owned();
-        let creator_id = params.get("creator_id")?.to_owned();
-        let is_public = params.get("is_public")?.parse::<bool>()?;
+        let id = params.get("id").ok_or(anyhow!("id not found"))?.to_owned();
+        let caption = params
+            .get("caption")
+            .ok_or(anyhow!("caption not found"))?
+            .to_owned();
+        let subspace_id = params
+            .get("subspace_id")
+            .ok_or(anyhow!("subspace_id not found"))?
+            .to_owned();
+        let creator_id = params
+            .get("creator_id")
+            .ok_or(anyhow!("creator_id not found"))?
+            .to_owned();
+        let is_public = params
+            .get("is_public")
+            .ok_or(anyhow!("is_public not found"))?
+            .parse::<bool>()?;
 
         // get the item from db, check whether obj in db
-        let (sql, sql_params) = GutpTag::build_get_by_id(id);
+        let (sql, sql_params) = GutpTag::build_get_by_id(&id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
-        match rowset.rows.next() {
+        match rowset.rows.into_iter().next() {
             Some(row) => {
                 let old_tag = GutpTag::from_row(row);
 
@@ -231,7 +264,7 @@ impl GutpTagModule {
 
         let params = req.parse_urlencoded()?;
 
-        let id = params.get("id")?;
+        let id = params.get("id").ok_or(anyhow!("id is required"))?;
 
         let (sql, sql_params) = GutpTag::build_delete(id);
         _ = pg::execute(&pg_addr, &sql, &sql_params)?;
