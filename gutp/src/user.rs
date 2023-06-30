@@ -3,6 +3,7 @@ use anyhow::{anyhow, bail};
 use eightfish::{
     EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
 };
+use crate::utils;
 use eightfish_derive::EightFishModel;
 use gutp_types::GutpUser;
 use serde::{Deserialize, Serialize};
@@ -24,6 +25,36 @@ enum GutpUserRole {
 pub struct GutpUserModule;
 
 impl GutpUserModule {
+    fn get_list(req: &mut Request) -> Result<Response> {
+        let pg_addr = std::env::var(DB_URL_ENV)?;
+
+        let params = req.parse_urlencoded()?;
+
+        let (limit, offset) = utils::build_page_info(&params)?;
+
+        let sql = SqlBuilder::select_from(&GutpUser::model_name())
+            .fields(&GutpUser::fields())
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let rowset = pg::query(&pg_addr, &sql, &[])?;
+
+        let mut results: Vec<GutpUser> = vec![];
+        for row in rowset.rows {
+            let sp = GutpUser::from_row(row);
+            results.push(sp);
+        }
+
+        let info = Info {
+            model_name: GutpUser::model_name(),
+            action: HandlerCRUD::List,
+            extra: "".to_string(),
+        };
+
+        Ok(Response::new(Status::Successful, info, results))
+    }
+
     fn get_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
 
@@ -43,6 +74,39 @@ impl GutpUserModule {
         let info = Info {
             model_name: GutpUser::model_name(),
             action: HandlerCRUD::GetOne,
+            extra: "".to_string(),
+        };
+
+        Ok(Response::new(Status::Successful, info, results))
+    }
+
+    fn get_one_user_by_account(req: &mut Request) -> Result<Response> {
+        let pg_addr = std::env::var(DB_URL_ENV)?;
+
+        let params = req.parse_urlencoded()?;
+
+        let account = params.get("account").ok_or(anyhow!("account is required"))?;
+        let (limit, offset) = utils::build_page_info(&params)?;
+
+        let sql = SqlBuilder::select_from(&GutpUser::model_name())
+            .fields(&GutpUser::fields())
+            .and_where_eq("account", "$1")
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+        let sql_param = ParameterValue::Str(account);
+        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+
+        let mut results: Vec<GutpUser> = vec![];
+        for row in rowset.rows {
+            let sp = GutpUser::from_row(row);
+            results.push(sp);
+        }
+
+        let info = Info {
+            model_name: GutpUser::model_name(),
+            action: HandlerCRUD::List,
             extra: "".to_string(),
         };
 
@@ -199,10 +263,11 @@ impl GutpUserModule {
 impl Module for GutpUserModule {
     fn router(&self, router: &mut Router) -> Result<()> {
         router.get("/v1/user", Self::get_one);
+        router.get("/v1/user_by_account", Self::get_one_user_by_account);
+        router.get("/v1/user/list", Self::get_list);
         router.post("/v1/user/create", Self::new_user);
         router.post("/v1/user/update", Self::update);
         router.post("/v1/user/delete", Self::delete);
-
         Ok(())
     }
 }
