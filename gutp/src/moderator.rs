@@ -28,7 +28,7 @@ impl GutpModeratorModule {
         let results = if let Some(row) = rowset.rows.into_iter().next() {
             vec![GutpModerator::from_row(row)]
         } else {
-            return bail!("no this item".to_string());
+            bail!("no this item".to_string());
         };
 
         let info = Info {

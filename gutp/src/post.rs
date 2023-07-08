@@ -45,7 +45,7 @@ impl GutpPostModule {
         let results = if let Some(row) = rowset.rows.into_iter().next() {
             vec![GutpPost::from_row(row)]
         } else {
-            return bail!("no this item".to_string());
+            bail!("no this item".to_string());
         };
 
         let info = Info {
@@ -242,6 +242,10 @@ impl GutpPostModule {
             .get("author_id")
             .ok_or(anyhow!("author_id is required"))?
             .to_owned();
+        let author_nickname = params
+            .get("author_nickname")
+            .ok_or(anyhow!("author_nickname is required"))?
+            .to_owned();
         let subspace_id = params
             .get("subspace_id")
             .ok_or(anyhow!("subspace_id is required"))?
@@ -279,6 +283,7 @@ impl GutpPostModule {
             title,
             content,
             author_id,
+            author_nickname,
             subspace_id,
             extlink,
             profession,
@@ -322,21 +327,9 @@ impl GutpPostModule {
             .get("author_id")
             .ok_or(anyhow!("author_id is required"))?
             .to_owned();
-        let subspace_id = params
-            .get("subspace_id")
-            .ok_or(anyhow!("subspace_id is required"))?
-            .to_owned();
         let extlink = params
             .get("extlink")
             .ok_or(anyhow!("extlink is required"))?
-            .to_owned();
-        let profession = params
-            .get("profession")
-            .ok_or(anyhow!("profession is required"))?
-            .to_owned();
-        let appid = params
-            .get("appid")
-            .ok_or(anyhow!("appid is required"))?
             .to_owned();
         let is_public = params
             .get("is_public")
@@ -354,10 +347,7 @@ impl GutpPostModule {
                     title,
                     content,
                     author_id,
-                    subspace_id,
                     extlink,
-                    profession,
-                    appid,
                     is_public,
                     ..old_post
                 };

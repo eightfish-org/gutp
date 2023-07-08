@@ -38,6 +38,7 @@ pub struct GutpPost {
     pub title: String,
     pub content: String,
     pub author_id: String,
+    pub author_nickname: String,
     pub subspace_id: String,
     pub extlink: String,
     pub profession: String,

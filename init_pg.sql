@@ -38,6 +38,7 @@ CREATE TABLE gutppost (
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     author_id TEXT NOT NULL,
+    author_nickname TEXT NOT NULL,
     subspace_id TEXT NOT NULL,
     extlink TEXT NOT NULL,
     profession TEXT NOT NULL,
