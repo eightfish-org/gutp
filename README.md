@@ -40,3 +40,10 @@ If there is DB change, following cleanup needed:
 
     Delete gutp-db_1-1
     Delete gutp-subnode_1-1
+    
+
+```
+docker compose -f gutp-docker-compose-1node.yml stop
+docker rm gutp-db_1-1
+docker rm gutp-subnode_1-1
+```

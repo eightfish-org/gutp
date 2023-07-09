@@ -166,6 +166,10 @@ impl GutpCommentModule {
             .get("author_id")
             .ok_or(anyhow!("author_id is required."))?
             .to_owned();
+        let author_nickname = params
+            .get("author_nickname")
+            .ok_or(anyhow!("author_nickname is required."))?
+            .to_owned();
         let post_id = params
             .get("post_id")
             .ok_or(anyhow!("post_id required."))?
@@ -194,6 +198,7 @@ impl GutpCommentModule {
             id,
             content,
             author_id,
+            author_nickname,
             post_id,
             parent_comment_id,
             is_public,
@@ -231,6 +236,10 @@ impl GutpCommentModule {
             .get("author_id")
             .ok_or(anyhow!("author_id is required."))?
             .to_owned();
+        let author_nickname = params
+            .get("author_nickname")
+            .ok_or(anyhow!("author_nickname is required."))?
+            .to_owned();
         let post_id = params
             .get("post_id")
             .ok_or(anyhow!("post_id is required."))?
@@ -254,6 +263,7 @@ impl GutpCommentModule {
                 let comment = GutpComment {
                     content,
                     author_id,
+                    author_nickname,
                     post_id,
                     parent_comment_id,
                     is_public,
