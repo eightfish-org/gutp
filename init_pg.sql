@@ -1,6 +1,7 @@
 CREATE TABLE gutpuser (
     id TEXT PRIMARY KEY,
     account TEXT NOT NULL,
+    oauth_source TEXT NOT NULL,,
     nickname TEXT NOT NULL,
     avatar TEXT NOT NULL,
     role SMALLINT NOT NULL,
@@ -56,6 +57,7 @@ CREATE TABLE gutpcomment (
     id TEXT PRIMARY KEY,
     content TEXT NOT NULL,
     author_id TEXT NOT NULL,
+    author_nickname TEXT NOT NULL,
     post_id TEXT NOT NULL,
     parent_comment_id TEXT,
     is_public BOOLEAN NOT NULL,

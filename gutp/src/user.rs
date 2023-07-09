@@ -58,6 +58,10 @@ impl GutpUserModule {
             .get("account")
             .ok_or(anyhow!("account is required"))?
             .to_owned();
+        let oauth_source = params
+            .get("oauth_source")
+            .ok_or(anyhow!("oauth_source is required"))?
+            .to_owned();
         let nickname = params
             .get("nickname")
             .ok_or(anyhow!("nickname is required"))?
@@ -89,6 +93,7 @@ impl GutpUserModule {
         let article = GutpUser {
             id,
             account,
+            oauth_source,
             nickname,
             avatar,
             role: GutpUserRole::Normal as i16,
@@ -122,6 +127,10 @@ impl GutpUserModule {
             .get("account")
             .ok_or(anyhow!("account is required"))?
             .to_owned();
+        let oauth_source = params
+            .get("oauth_source")
+            .ok_or(anyhow!("oauth_source is required"))?
+            .to_owned();
         let nickname = params
             .get("nickname")
             .ok_or(anyhow!("nickname is required"))?
@@ -148,6 +157,7 @@ impl GutpUserModule {
 
                 let user = GutpUser {
                     account,
+                    oauth_source,
                     nickname,
                     avatar,
                     pub_settings,

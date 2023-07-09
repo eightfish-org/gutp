@@ -7,6 +7,7 @@ use spin_sdk::pg::{DbValue, Decode, ParameterValue};
 pub struct GutpUser {
     pub id: String,
     pub account: String,
+    pub oauth_source: String,
     pub nickname: String,
     pub avatar: String,
     pub role: i16,
@@ -53,6 +54,7 @@ pub struct GutpComment {
     pub id: String,
     pub content: String,
     pub author_id: String,
+    pub author_nickname: String,
     pub post_id: String,
     pub parent_comment_id: String,
     pub is_public: bool,
