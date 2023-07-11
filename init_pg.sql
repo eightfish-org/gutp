@@ -1,7 +1,7 @@
 CREATE TABLE gutpuser (
     id TEXT PRIMARY KEY,
     account TEXT NOT NULL,
-    oauth_source TEXT NOT NULL,,
+    oauth_source TEXT NOT NULL,
     nickname TEXT NOT NULL,
     avatar TEXT NOT NULL,
     role SMALLINT NOT NULL,
