@@ -90,7 +90,7 @@ dependencies = [
 [[package]]
 name = "eightfish"
 version = "0.1.0"
-source = "git+https://github.com/eightfish-org/eightfish#754f47d55527550b59a50dca1c4ed7f48f38981f"
+source = "git+https://github.com/eightfish-org/eightfish#aee9d6a21dfc755c1a499b2a4756a65dc915790d"
 dependencies = [
  "anyhow",
  "form_urlencoded",
@@ -102,7 +102,7 @@ dependencies = [
 [[package]]
 name = "eightfish-derive"
 version = "0.1.0"
-source = "git+https://github.com/eightfish-org/eightfish#754f47d55527550b59a50dca1c4ed7f48f38981f"
+source = "git+https://github.com/eightfish-org/eightfish#aee9d6a21dfc755c1a499b2a4756a65dc915790d"
 dependencies = [
  "json-digest",
  "proc-macro2",
@@ -378,9 +378,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.100"
+version = "1.0.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f1e14e89be7aa4c4b78bdbdc9eb5bf8517829a600ae8eaa39a6e1d960b5185c"
+checksum = "b5062a995d481b2308b6064e9af76011f2921c35f97b0468811ed9f6cd91dfed"
 dependencies = [
  "indexmap",
  "itoa",
@@ -440,7 +440,7 @@ dependencies = [
 [[package]]
 name = "spin_worker"
 version = "0.1.0"
-source = "git+https://github.com/eightfish-org/eightfish#754f47d55527550b59a50dca1c4ed7f48f38981f"
+source = "git+https://github.com/eightfish-org/eightfish#aee9d6a21dfc755c1a499b2a4756a65dc915790d"
 dependencies = [
  "anyhow",
  "bs58",
