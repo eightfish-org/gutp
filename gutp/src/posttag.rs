@@ -167,6 +167,8 @@ impl GutpPostTagModule {
             post_id,
             tag_id,
             created_time: time,
+            create_time_on_chain: time,
+            update_time_on_chain: time,
         };
 
         // construct a sql statement and param
@@ -198,7 +200,11 @@ impl GutpPostTagModule {
             .get("tag_id")
             .ok_or(anyhow!("tag_id is required"))?
             .to_owned();
-
+        let time = req
+            .ext()
+            .get("time")
+            .ok_or(anyhow!("time is required"))?
+            .parse::<i64>()?;
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpPostTag::build_get_by_id(id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
@@ -209,6 +215,7 @@ impl GutpPostTagModule {
                 let posttag = GutpPostTag {
                     post_id,
                     tag_id,
+                    update_time_on_chain: time,
                     ..old_posttag
                 };
 

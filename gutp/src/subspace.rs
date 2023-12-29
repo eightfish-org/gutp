@@ -238,7 +238,11 @@ impl GutpSubspaceModule {
             .get("time")
             .ok_or(anyhow!("failed get time"))?
             .parse::<i64>()?;
-
+        let slug = req
+            .ext()
+            .get("slug")
+            .ok_or(anyhow!("failed get slug"))?
+            .to_owned();
         let subspace = GutpSubspace {
             id,
             title,
@@ -251,6 +255,9 @@ impl GutpSubspaceModule {
             status: GutpSubspaceStatus::Normal as i16,
             weight: GutpSubspaceWeight::Normal as i16,
             created_time: time,
+            create_time_on_chain: time,
+            update_time_on_chain: time,
+            slug,
         };
 
         let (sql, sql_params) = subspace.build_insert();
@@ -301,7 +308,11 @@ impl GutpSubspaceModule {
             .get("is_public")
             .ok_or(anyhow!("is_public is required"))?
             .parse::<bool>()?;
-
+        let time = req
+            .ext()
+            .get("time")
+            .ok_or(anyhow!("time is required"))?
+            .parse::<i64>()?;
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpSubspace::build_get_by_id(id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
@@ -318,6 +329,7 @@ impl GutpSubspaceModule {
                     profession,
                     appid,
                     is_public,
+                    update_time_on_chain: time,
                     ..old_subspace
                 };
 

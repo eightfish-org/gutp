@@ -137,6 +137,8 @@ impl GutpUserModule {
             signup_time: time,
             pub_settings,
             ext,
+            create_time_on_chain: time,
+            update_time_on_chain: time,
         };
 
         let (sql, sql_params) = article.build_insert();
@@ -191,7 +193,7 @@ impl GutpUserModule {
             Some(row) => {
                 let old_user = GutpUser::from_row(row);
 
-                let user = GutpUser {
+                let user: GutpUser = GutpUser {
                     account,
                     oauth_source,
                     nickname,

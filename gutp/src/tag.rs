@@ -186,6 +186,8 @@ impl GutpTagModule {
             is_public,
             weight: GUTP_TAG_WEIGHT_DEFAULT,
             created_time: time,
+            create_time_on_chain: time,
+            update_time_on_chain: time,
         };
 
         let (sql, sql_params) = tag.build_insert();
@@ -224,7 +226,11 @@ impl GutpTagModule {
             .get("is_public")
             .ok_or(anyhow!("is_public not found"))?
             .parse::<bool>()?;
-
+        let time = req
+            .ext()
+            .get("time")
+            .ok_or(anyhow!("time is required"))?
+            .parse::<i64>()?;
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpTag::build_get_by_id(&id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
@@ -237,6 +243,7 @@ impl GutpTagModule {
                     subspace_id,
                     creator_id,
                     is_public,
+                    update_time_on_chain: time,
                     ..old_tag
                 };
 

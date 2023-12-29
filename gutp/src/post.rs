@@ -293,6 +293,8 @@ impl GutpPostModule {
             weight: GutpPostWeight::Normal as i16,
             created_time: time,
             updated_time: time,
+            create_time_on_chain: time,
+            update_time_on_chain: time,
         };
 
         let (sql_statement, sql_params) = post.build_insert();
@@ -335,7 +337,11 @@ impl GutpPostModule {
             .get("is_public")
             .ok_or(anyhow!("is_public is required"))?
             .parse::<bool>()?;
-
+        let time = req
+            .ext()
+            .get("time")
+            .ok_or(anyhow!("time is required"))?
+            .parse::<i64>()?;
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpPost::build_get_by_id(id.as_str());
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
@@ -349,6 +355,7 @@ impl GutpPostModule {
                     author_id,
                     extlink,
                     is_public,
+                    update_time_on_chain: time,
                     ..old_post
                 };
 
