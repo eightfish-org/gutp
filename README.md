@@ -38,6 +38,7 @@ docker compose -f gutp-docker-compose-1node.yml up
 Rebuild application image when code changed.
 
 ```
+cd gutp && spin build
 ./build_app_image.sh
 ```
 

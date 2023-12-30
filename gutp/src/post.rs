@@ -355,6 +355,7 @@ impl GutpPostModule {
                     author_id,
                     extlink,
                     is_public,
+                    updated_time: time,
                     update_time_on_chain: time,
                     ..old_post
                 };

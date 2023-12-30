@@ -227,7 +227,10 @@ impl GutpSubspaceModule {
             .get("is_public")
             .ok_or(anyhow!("missing is_public"))?
             .parse::<bool>()?;
-
+        let slug = params
+            .get("slug")
+            .ok_or(anyhow!("missing slug"))?
+            .to_owned();
         let id = req
             .ext()
             .get("random_str")
@@ -238,11 +241,6 @@ impl GutpSubspaceModule {
             .get("time")
             .ok_or(anyhow!("failed get time"))?
             .parse::<i64>()?;
-        let slug = req
-            .ext()
-            .get("slug")
-            .ok_or(anyhow!("failed get slug"))?
-            .to_owned();
         let subspace = GutpSubspace {
             id,
             title,
