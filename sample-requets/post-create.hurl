@@ -4,6 +4,7 @@ POST http://127.0.0.1:3000/v1/post/create
 title: test111
 content: this is the content of test111
 author_id: my_id_1
+author_nickname: my_nickname_1
 subspace_id: subspace_id_1
 extlink: extlink_1
 profession: profession_1

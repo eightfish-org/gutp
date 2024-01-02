@@ -1,3 +1,4 @@
+use core::time;
 use std::any;
 
 use crate::constants::DB_URL_ENV;
@@ -205,6 +206,8 @@ impl GutpCommentModule {
             status: GutpCommentStatus::Normal as i16,
             weight: GutpCommentWeight::Normal as i32,
             created_time: time,
+            create_time_on_chain: time,
+            update_time_on_chain: time,
         };
 
         // construct a sql statement and param
@@ -252,7 +255,11 @@ impl GutpCommentModule {
             .get("is_public")
             .ok_or(anyhow!("is_public is required."))?
             .parse::<bool>()?;
-
+        let time = req
+            .ext()
+            .get("time")
+            .ok_or(anyhow!("generate time failed"))?
+            .parse::<i64>()?;
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpComment::build_get_by_id(id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
@@ -267,6 +274,7 @@ impl GutpCommentModule {
                     post_id,
                     parent_comment_id,
                     is_public,
+                    update_time_on_chain: time,
                     ..old_comment
                 };
 

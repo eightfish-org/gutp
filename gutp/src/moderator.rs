@@ -1,3 +1,5 @@
+use core::time;
+
 use crate::utils;
 use anyhow::{anyhow, bail};
 use eightfish::{
@@ -218,6 +220,8 @@ impl GutpModeratorModule {
             tag_id,
             permission_level,
             created_time: time,
+            create_time_on_chain: time,
+            update_time_on_chain: time,
         };
 
         let (sql, sql_params) = moderator.build_insert();
@@ -260,7 +264,11 @@ impl GutpModeratorModule {
             .get("permission_level")
             .ok_or(anyhow!("permission_level is required"))?
             .parse::<i16>()?;
-
+        let time = req
+            .ext()
+            .get("time")
+            .ok_or(anyhow!("time is required"))?
+            .parse::<i64>()?;
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpModerator::build_get_by_id(id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
@@ -274,6 +282,7 @@ impl GutpModeratorModule {
                     subspace_id,
                     tag_id,
                     permission_level,
+                    update_time_on_chain: time,
                     ..old_moderator
                 };
 

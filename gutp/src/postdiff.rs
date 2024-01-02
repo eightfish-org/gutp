@@ -141,6 +141,8 @@ impl GutpPostDiffModule {
             diff,
             version_num,
             created_time: time,
+            create_time_on_chain: time,
+            update_time_on_chain: time,
         };
 
         let (sql, sql_params) = postdiff.build_insert();
