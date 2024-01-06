@@ -221,7 +221,6 @@ impl GutpModeratorModule {
             permission_level,
             created_time: time,
             create_time_on_chain: time,
-            update_time_on_chain: time,
         };
 
         let (sql, sql_params) = moderator.build_insert();
@@ -282,7 +281,6 @@ impl GutpModeratorModule {
                     subspace_id,
                     tag_id,
                     permission_level,
-                    update_time_on_chain: time,
                     ..old_moderator
                 };
 

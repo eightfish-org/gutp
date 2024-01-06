@@ -10,7 +10,6 @@ CREATE TABLE gutpuser (
     pub_settings TEXT NOT NULL,
     ext TEXT NOT NULL,
     create_time_on_chain bigint not null,
-    update_time_on_chain bigint not null
 );
 CREATE TABLE gutpuser_idhash (
 	id varchar PRIMARY KEY,
@@ -30,8 +29,7 @@ CREATE TABLE gutpsubspace (
     weight SMALLINT NOT NULL,
     slug TEXT NOT NULL,
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null,
-    update_time_on_chain bigint not null
+    create_time_on_chain bigint not null
 );
 CREATE TABLE gutpsubspace_idhash (
 	id varchar PRIMARY KEY,
@@ -72,8 +70,7 @@ CREATE TABLE gutpcomment (
     status SMALLINT NOT NULL,
     weight INTEGER NOT NULL,
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null,
-    update_time_on_chain bigint not null
+    create_time_on_chain bigint not null
 );
 CREATE TABLE gutpcomment_idhash (
 	id varchar PRIMARY KEY,
@@ -89,8 +86,7 @@ CREATE TABLE gutptag (
     is_public BOOLEAN NOT NULL,
     weight SMALLINT NOT NULL,
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null,
-    update_time_on_chain bigint not null
+    create_time_on_chain bigint not null
 );
 CREATE TABLE gutptag_idhash (
 	id varchar PRIMARY KEY,
@@ -102,8 +98,7 @@ CREATE TABLE gutpposttag (
     post_id TEXT NOT NULL,
     tag_id TEXT NOT NULL,
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null,
-    update_time_on_chain bigint not null
+    create_time_on_chain bigint not null
 );
 CREATE TABLE gutpposttag_idhash (
 	id varchar PRIMARY KEY,
@@ -116,8 +111,7 @@ CREATE TABLE gutppostdiff (
     diff TEXT NOT NULL,
     version_num INTEGER NOT NULL,
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null,
-    update_time_on_chain bigint not null
+    create_time_on_chain bigint not null
 );
 CREATE TABLE gutppostdiff_idhash (
 	id varchar PRIMARY KEY,
@@ -131,7 +125,8 @@ CREATE TABLE gutpmoderator (
     subspace_id TEXT,
     tag_id TEXT,
     permission_level SMALLINT NOT NULL,
-    created_time BIGINT NOT NULL
+    created_time BIGINT NOT NULL,
+    create_time_on_chain bigint not null
 );
 CREATE TABLE gutpmoderator_idhash (
 	id varchar PRIMARY KEY,
@@ -148,8 +143,7 @@ CREATE TABLE gutpextobj (
     is_subspace_ext BOOLEAN NOT NULL,
     weight SMALLINT NOT NULL,
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null,
-    update_time_on_chain bigint not null
+    create_time_on_chain bigint not null
 );
 CREATE TABLE gutpextobj_idhash (
 	id varchar PRIMARY KEY,
