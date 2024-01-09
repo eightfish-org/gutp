@@ -70,7 +70,6 @@ pub struct GutpComment {
     pub weight: i32,
     pub created_time: i64,
     pub create_time_on_chain: i64,
-    pub update_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -84,7 +83,6 @@ pub struct GutpTag {
     pub weight: i16,
     pub created_time: i64,
     pub create_time_on_chain: i64,
-    pub update_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -94,7 +92,6 @@ pub struct GutpPostTag {
     pub tag_id: String,
     pub created_time: i64,
     pub create_time_on_chain: i64,
-    pub update_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -105,7 +102,6 @@ pub struct GutpPostDiff {
     pub version_num: i32,
     pub created_time: i64,
     pub create_time_on_chain: i64,
-    pub update_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -118,7 +114,6 @@ pub struct GutpModerator {
     pub permission_level: i16,
     pub created_time: i64,
     pub create_time_on_chain: i64,
-    pub update_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -133,5 +128,4 @@ pub struct GutpExtobj {
     pub weight: i16,
     pub created_time: i64,
     pub create_time_on_chain: i64,
-    pub update_time_on_chain: i64,
 }

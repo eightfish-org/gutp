@@ -207,7 +207,6 @@ impl GutpCommentModule {
             weight: GutpCommentWeight::Normal as i32,
             created_time: time,
             create_time_on_chain: time,
-            update_time_on_chain: time,
         };
 
         // construct a sql statement and param
@@ -274,7 +273,6 @@ impl GutpCommentModule {
                     post_id,
                     parent_comment_id,
                     is_public,
-                    update_time_on_chain: time,
                     ..old_comment
                 };
 

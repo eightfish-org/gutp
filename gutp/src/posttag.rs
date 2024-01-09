@@ -168,7 +168,6 @@ impl GutpPostTagModule {
             tag_id,
             created_time: time,
             create_time_on_chain: time,
-            update_time_on_chain: time,
         };
 
         // construct a sql statement and param
@@ -215,7 +214,6 @@ impl GutpPostTagModule {
                 let posttag = GutpPostTag {
                     post_id,
                     tag_id,
-                    update_time_on_chain: time,
                     ..old_posttag
                 };
 

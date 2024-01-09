@@ -187,7 +187,6 @@ impl GutpTagModule {
             weight: GUTP_TAG_WEIGHT_DEFAULT,
             created_time: time,
             create_time_on_chain: time,
-            update_time_on_chain: time,
         };
 
         let (sql, sql_params) = tag.build_insert();
@@ -243,7 +242,6 @@ impl GutpTagModule {
                     subspace_id,
                     creator_id,
                     is_public,
-                    update_time_on_chain: time,
                     ..old_tag
                 };
 
