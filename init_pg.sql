@@ -9,7 +9,8 @@ CREATE TABLE gutpuser (
     signup_time BIGINT NOT NULL,
     pub_settings TEXT NOT NULL,
     ext TEXT NOT NULL,
-    create_time_on_chain bigint not null
+    create_time_on_chain bigint not null,
+    update_time_on_chain bigint not null
 );
 CREATE TABLE gutpuser_idhash (
 	id varchar PRIMARY KEY,
@@ -29,7 +30,8 @@ CREATE TABLE gutpsubspace (
     weight SMALLINT NOT NULL,
     slug TEXT NOT NULL,
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null
+    create_time_on_chain bigint not null,
+    update_time_on_chain bigint not null
 );
 CREATE TABLE gutpsubspace_idhash (
 	id varchar PRIMARY KEY,

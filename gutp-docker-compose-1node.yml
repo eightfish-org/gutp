@@ -7,7 +7,7 @@ services:
       - "8000:8000"
     volumes: 
       - ./data/blockchain-data:/data
-      - ./node:/vintage
+      - ./vintage:/vintage
     depends_on:
       - cache_1
   
