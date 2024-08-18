@@ -1,27 +1,16 @@
 version: '3.7'
 services:
-  subnode_1:
-    image: miketang84/eightfish-subnode:20230623
+  vintage_1:
+    image: vintage
     restart: always
     ports:
-      - "9933:9933"
-      - "9944:9944"
-      - "30333:30333"
-    command: eightfish-subnode --chain=dev --alice -d /data --unsafe-rpc-external --unsafe-ws-external --rpc-cors all --validator --node-key 0000000000000000000000000000000000000000000000000000000000000001
-    volumes:
-      - ./data/substrate-data:/data
-    
-  subxtproxy_1:
-    image: miketang84/eightfish-subxtproxy:20230623
-    restart: always
-    environment:
-      - REDIS_URL=redis://cache_1:6379
-      - SUBNODE_RPC=ws://subnode_1:9944
-    command: subxtproxy
+      - "8000:8000"
+    volumes: 
+      - ./data/blockchain-data:/data
+      - ./node:/vintage
     depends_on:
       - cache_1
-      - subnode_1
-
+  
   http_gate_1:
     image: miketang84/eightfish-http_gate:20230623
     restart: always
@@ -38,11 +27,9 @@ services:
     depends_on:
       - cache_1
       - db_1
-      - subnode_1
-      - subxtproxy_1
 
   db_1:
-    image: postgres:15.2-alpine
+    image: postgres:latest
     restart: always
     environment:
       - POSTGRES_USER=postgres
@@ -60,7 +47,7 @@ services:
       - ./init_pg.sql:/docker-entrypoint-initdb.d/init_pg.sql
 
   cache_1:
-    image: redis:6.2-alpine
+    image: redis:latest
     restart: always
     ports:
       - '6379:6379'
