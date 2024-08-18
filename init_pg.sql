@@ -9,7 +9,7 @@ CREATE TABLE gutpuser (
     signup_time BIGINT NOT NULL,
     pub_settings TEXT NOT NULL,
     ext TEXT NOT NULL,
-    create_time_on_chain bigint not null,
+    create_time_on_chain bigint not null
 );
 CREATE TABLE gutpuser_idhash (
 	id varchar PRIMARY KEY,
