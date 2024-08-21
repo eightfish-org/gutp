@@ -42,7 +42,7 @@ CREATE TABLE gutppost (
     author_nickname TEXT NOT NULL,              -- for convinence, no need to do join operation when show info of this post
     subspace_id TEXT NOT NULL,                  -- belongs to which subspace
     parent_post_id TEXT NOT NULL,               -- used to construct a post tree
-    extlink TEXT NOT NULL,                      -- for link aggregator-like application
+    ext_link TEXT NOT NULL,                      -- for link aggregator-like application
     is_public BOOLEAN NOT NULL,                 -- if public, the content of this post will be stored in plaintext, otherwise encrypted
     status SMALLINT NOT NULL,
     weight SMALLINT NOT NULL,                   -- used for ranking and recommendation
@@ -73,74 +73,73 @@ CREATE TABLE gutpcomment_idhash (
 	hash TEXT NOT NULL
 );
 
+-- a tag always belongs to certain subspace
 CREATE TABLE gutptag (
     id TEXT PRIMARY KEY,
     caption TEXT NOT NULL,
-    subspace_id TEXT NOT NULL,
-    creator_id TEXT NOT NULL,
-    is_subspace_tag BOOLEAN NOT NULL,
-    is_public BOOLEAN NOT NULL,
+    subspace_id TEXT NOT NULL,                  -- which subspace this tag belongs to
+    is_public BOOLEAN NOT NULL,                 -- is this tag a public (plaintext) tag
     weight SMALLINT NOT NULL,
     created_time BIGINT NOT NULL,
 );
 CREATE TABLE gutptag_idhash (
-	id varchar PRIMARY KEY,
-	hash varchar NOT NULL
+	id TEXT PRIMARY KEY,
+	hash TEXT NOT NULL
 );
 
+-- M:N relation table between post and tag
 CREATE TABLE gutpposttag (
     id TEXT PRIMARY KEY,
     post_id TEXT NOT NULL,
     tag_id TEXT NOT NULL,
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null
 );
 CREATE TABLE gutpposttag_idhash (
-	id varchar PRIMARY KEY,
-	hash varchar NOT NULL
+	id TEXT PRIMARY KEY,
+	hash TEXT NOT NULL
 );
 
+-- for history version control
 CREATE TABLE gutppostdiff (
     id TEXT PRIMARY KEY,
-    post_id TEXT NOT NULL,
-    diff TEXT NOT NULL,
-    version_num INTEGER NOT NULL,
+    post_id TEXT NOT NULL,                            -- which post's diff
+    diff TEXT NOT NULL,                               -- diff bewteen old version and new version
+    version_num INTEGER NOT NULL,                     -- will increase 1 by every modification
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null
 );
 CREATE TABLE gutppostdiff_idhash (
-	id varchar PRIMARY KEY,
-	hash varchar NOT NULL
+	id TEXT PRIMARY KEY,
+	hash TEXT NOT NULL
 );
 
+-- subspace admins
 CREATE TABLE gutpmoderator (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    is_subspace_moderator BOOLEAN NOT NULL,
-    subspace_id TEXT,
-    tag_id TEXT,
-    permission_level SMALLINT NOT NULL,
+    subspace_id TEXT NOT NULL,                        -- which subspace this moderator belongs to
+    is_subspace_moderator BOOLEAN NOT NULL,           -- is it a subspace-scoped moderator
+    tag_id TEXT,                                      -- or it is a tag-scoped moderator, bound to the tag
+    permission_level SMALLINT NOT NULL,               -- a simple mechanism for permission control
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null
 );
 CREATE TABLE gutpmoderator_idhash (
-	id varchar PRIMARY KEY,
-	hash varchar NOT NULL
+	id TEXT PRIMARY KEY,
+	hash TEXT NOT NULL
 );
 
+-- an extension object for all levels
 CREATE TABLE gutpextobj (
     id TEXT PRIMARY KEY,
     caption TEXT NOT NULL,
     content TEXT NOT NULL,
-    subspace_id TEXT,
-    tag_id TEXT,
-    creator_id TEXT NOT NULL,
-    is_subspace_ext BOOLEAN NOT NULL,
-    weight SMALLINT NOT NULL,
+    subspace_id TEXT NOT NULL,                        -- if has value, it is an extension obj to this subspace
+    tag_id TEXT NOT NULL,                             -- if has value, it is an extension obj to this tag
+    post_id TEXT NOT NULL,                            -- if has value, it is an extension obj to this post
+    comment_id TEXT NOT NULL,                         -- if has value, it is an extension obj to this comment
+    weight SMALLINT NOT NULL,                         -- for ranking
     created_time BIGINT NOT NULL,
-    create_time_on_chain bigint not null
 );
 CREATE TABLE gutpextobj_idhash (
-	id varchar PRIMARY KEY,
-	hash varchar NOT NULL
+	id TEXT PRIMARY KEY,
+	hash TEXT NOT NULL
 );
