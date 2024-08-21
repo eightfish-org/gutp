@@ -3,7 +3,7 @@
 A General User Text Persistence protocol.
 
 ## The Backend
-
+ 
 This project aims to give a reference implementation for the GUTP backend service.
 
 The frontend should be putting into another project. This backend could potentially support multiple frontends, or multiple different apps.
