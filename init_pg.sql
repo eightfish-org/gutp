@@ -6,8 +6,6 @@ CREATE TABLE gutpuser (
     avatar TEXT NOT NULL,
     role SMALLINT NOT NULL,                     -- role for simple permission system
     status SMALLINT NOT NULL,                   -- current status of this account, like normal, frozen, deleted, ...
-    pub_settings TEXT NOT NULL,                 -- some settings could be public (those with no privacy issues)
-    ext TEXT NOT NULL,                          -- some extension content
     created_time BIGINT NOT NULL,
 );
 CREATE TABLE gutpuser_idhash (
@@ -127,15 +125,17 @@ CREATE TABLE gutpmoderator_idhash (
 	hash TEXT NOT NULL
 );
 
--- an extension object for all levels
+-- an unified extension object for all levels
 CREATE TABLE gutpextobj (
     id TEXT PRIMARY KEY,
     caption TEXT NOT NULL,
-    content TEXT NOT NULL,
+    content TEXT NOT NULL,                            -- may be a json 
+	user_id TEXT NOT NULL,                            -- if has value, it is an extension obj to this user
     subspace_id TEXT NOT NULL,                        -- if has value, it is an extension obj to this subspace
     tag_id TEXT NOT NULL,                             -- if has value, it is an extension obj to this tag
     post_id TEXT NOT NULL,                            -- if has value, it is an extension obj to this post
     comment_id TEXT NOT NULL,                         -- if has value, it is an extension obj to this comment
+    is_public BOOLEAN NOT NULL,                       -- is it's data public/plaintext
     weight SMALLINT NOT NULL,                         -- for ranking
     created_time BIGINT NOT NULL,
 );
