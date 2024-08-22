@@ -1,15 +1,10 @@
 use crate::constants::DB_URL_ENV;
 use crate::utils;
 use anyhow::{anyhow, bail};
-use eightfish::{
-    EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
-};
-use eightfish_derive::EightFishModel;
+use eightfish::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
 use gutp_types::GutpUser;
-use serde::{Deserialize, Serialize};
-use spin_sdk::pg::{self, DbValue, Decode, ParameterValue};
+use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
-use std::any;
 
 enum GutpUserStatus {
     Normal = 0,
@@ -106,14 +101,6 @@ impl GutpUserModule {
             .get("avatar")
             .ok_or(anyhow!("avatar is required"))?
             .to_owned();
-        let pub_settings = params
-            .get("pub_settings")
-            .ok_or(anyhow!("pub_settings is required"))?
-            .to_owned();
-        let ext = params
-            .get("ext")
-            .ok_or(anyhow!("ext is required"))?
-            .to_owned();
 
         let id = req
             .ext()
@@ -134,11 +121,7 @@ impl GutpUserModule {
             avatar,
             role: GutpUserRole::Normal as i16,
             status: GutpUserStatus::Normal as i16,
-            signup_time: time,
-            pub_settings,
-            ext,
-            create_time_on_chain: time,
-            update_time_on_chain: time,
+            created_time: time,
         };
 
         let (sql, sql_params) = article.build_insert();
@@ -177,14 +160,6 @@ impl GutpUserModule {
             .get("avatar")
             .ok_or(anyhow!("avatar is required"))?
             .to_owned();
-        let pub_settings = params
-            .get("pub_settings")
-            .ok_or(anyhow!("pub_settings is required"))?
-            .to_owned();
-        let ext = params
-            .get("ext")
-            .ok_or(anyhow!("ext is required"))?
-            .to_owned();
 
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpUser::build_get_by_id(id);
@@ -198,8 +173,6 @@ impl GutpUserModule {
                     oauth_source,
                     nickname,
                     avatar,
-                    pub_settings,
-                    ext,
                     ..old_user
                 };
 

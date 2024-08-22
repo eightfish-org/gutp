@@ -1,18 +1,9 @@
-use core::time;
-use std::any;
-
 use crate::constants::DB_URL_ENV;
 use crate::utils;
 use anyhow::{anyhow, bail};
-use eightfish::{
-    EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
-};
-use eightfish_derive::EightFishModel;
-use serde::{Deserialize, Serialize};
+use eightfish::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
-
-const PAGESIZE: u64 = 25;
 
 use gutp_types::GutpComment;
 
@@ -206,7 +197,6 @@ impl GutpCommentModule {
             status: GutpCommentStatus::Normal as i16,
             weight: GutpCommentWeight::Normal as i32,
             created_time: time,
-            create_time_on_chain: time,
         };
 
         // construct a sql statement and param
@@ -254,11 +244,12 @@ impl GutpCommentModule {
             .get("is_public")
             .ok_or(anyhow!("is_public is required."))?
             .parse::<bool>()?;
-        let time = req
-            .ext()
-            .get("time")
-            .ok_or(anyhow!("generate time failed"))?
-            .parse::<i64>()?;
+        // let time = req
+        //     .ext()
+        //     .get("time")
+        //     .ok_or(anyhow!("generate time failed"))?
+        //     .parse::<i64>()?;
+
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpComment::build_get_by_id(id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;

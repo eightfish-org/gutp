@@ -19,11 +19,11 @@ CREATE TABLE gutpsubspace (
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     banner TEXT NOT NULL,
-    category TEXT NOT NULL,                     -- the category of this subspace 
     is_public BOOLEAN NOT NULL,                 -- is this subspace a public square, all data in this subspace is plaintext
     status SMALLINT NOT NULL,                   -- normal, forzen, blacklist, deleted ...
     weight SMALLINT NOT NULL,                   -- weight of this subspace, used for ranking and recommendation
     owner_id TEXT NOT NULL,                     -- is this subspace a personal blog space, owner_id is the person's id
+    category TEXT NOT NULL,                     -- the category of this subspace 
     app_id TEXT NOT NULL,                       -- multiple app's can be connected to the same gutp instance, so use app_id to distinguish
     created_time BIGINT NOT NULL,
 );

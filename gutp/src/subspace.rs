@@ -1,11 +1,5 @@
-use std::any;
-
 use anyhow::{anyhow, bail};
-use eightfish::{
-    EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
-};
-use eightfish_derive::EightFishModel;
-use serde::{Deserialize, Serialize};
+use eightfish::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
 
@@ -215,12 +209,12 @@ impl GutpSubspaceModule {
             .get("owner_id")
             .ok_or(anyhow!("missing owner_id"))?
             .to_owned();
-        let profession = params
-            .get("profession")
+        let category = params
+            .get("category")
             .ok_or(anyhow!("missing profession"))?
             .to_owned();
-        let appid = params
-            .get("appid")
+        let app_id = params
+            .get("app_id")
             .ok_or(anyhow!("missing appid"))?
             .to_owned();
         let is_public = params
@@ -247,14 +241,12 @@ impl GutpSubspaceModule {
             description,
             banner,
             owner_id,
-            profession,
-            appid,
+            category,
+            app_id,
             is_public,
             status: GutpSubspaceStatus::Normal as i16,
             weight: GutpSubspaceWeight::Normal as i16,
             created_time: time,
-            create_time_on_chain: time,
-            update_time_on_chain: time,
             slug,
         };
 
@@ -294,23 +286,24 @@ impl GutpSubspaceModule {
             .get("owner_id")
             .ok_or(anyhow!("owner_id is required"))?
             .to_owned();
-        let profession = params
-            .get("profession")
+        let category = params
+            .get("category")
             .ok_or(anyhow!("profession is required"))?
             .to_owned();
-        let appid = params
-            .get("appid")
+        let app_id = params
+            .get("app_id")
             .ok_or(anyhow!("appid is required"))?
             .to_owned();
         let is_public = params
             .get("is_public")
             .ok_or(anyhow!("is_public is required"))?
             .parse::<bool>()?;
-        let time = req
-            .ext()
-            .get("time")
-            .ok_or(anyhow!("time is required"))?
-            .parse::<i64>()?;
+        // let time = req
+        //     .ext()
+        //     .get("time")
+        //     .ok_or(anyhow!("time is required"))?
+        //     .parse::<i64>()?;
+
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpSubspace::build_get_by_id(id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
@@ -324,10 +317,9 @@ impl GutpSubspaceModule {
                     description,
                     banner,
                     owner_id,
-                    profession,
-                    appid,
+                    category,
+                    app_id,
                     is_public,
-                    update_time_on_chain: time,
                     ..old_subspace
                 };
 

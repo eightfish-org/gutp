@@ -1,11 +1,5 @@
-use std::any;
-
 use anyhow::{anyhow, bail};
-use eightfish::{
-    EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
-};
-use eightfish_derive::EightFishModel;
-use serde::{Deserialize, Serialize};
+use eightfish::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
 
@@ -153,14 +147,6 @@ impl GutpTagModule {
             .get("subspace_id")
             .ok_or(anyhow!("subspace_id is required"))?
             .to_owned();
-        let creator_id = params
-            .get("creator_id")
-            .ok_or(anyhow!("creator_id is required"))?
-            .to_owned();
-        let is_subspace_tag = params
-            .get("is_subspace_tag")
-            .ok_or(anyhow!("is_subspace_tag is required"))?
-            .parse::<bool>()?;
         let is_public = params
             .get("is_public")
             .ok_or(anyhow!("is_public is required"))?
@@ -181,12 +167,9 @@ impl GutpTagModule {
             id,
             caption,
             subspace_id,
-            creator_id,
-            is_subspace_tag,
             is_public,
             weight: GUTP_TAG_WEIGHT_DEFAULT,
             created_time: time,
-            create_time_on_chain: time,
         };
 
         let (sql, sql_params) = tag.build_insert();
@@ -217,19 +200,16 @@ impl GutpTagModule {
             .get("subspace_id")
             .ok_or(anyhow!("subspace_id not found"))?
             .to_owned();
-        let creator_id = params
-            .get("creator_id")
-            .ok_or(anyhow!("creator_id not found"))?
-            .to_owned();
         let is_public = params
             .get("is_public")
             .ok_or(anyhow!("is_public not found"))?
             .parse::<bool>()?;
-        let time = req
-            .ext()
-            .get("time")
-            .ok_or(anyhow!("time is required"))?
-            .parse::<i64>()?;
+        // let time = req
+        //     .ext()
+        //     .get("time")
+        //     .ok_or(anyhow!("time is required"))?
+        //     .parse::<i64>()?;
+
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpTag::build_get_by_id(&id);
         let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
@@ -240,7 +220,6 @@ impl GutpTagModule {
                 let tag = GutpTag {
                     caption,
                     subspace_id,
-                    creator_id,
                     is_public,
                     ..old_tag
                 };

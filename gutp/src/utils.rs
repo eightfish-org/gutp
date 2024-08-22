@@ -1,4 +1,4 @@
-use crate::constants::PAGESIZE_STR;
+use crate::constants::PAGESIZE;
 use anyhow::{anyhow, Result};
 use std::collections::HashMap;
 
@@ -9,7 +9,7 @@ pub fn build_page_info(params: &HashMap<String, String>) -> Result<(u64, u64)> {
         .parse::<u64>()?;
     let limit = params
         .get("pagesize")
-        .unwrap_or(&PAGESIZE_STR.to_string())
+        .unwrap_or(&PAGESIZE.to_string())
         .parse::<u64>()?;
     let offset = page * limit;
     Ok((limit, offset))

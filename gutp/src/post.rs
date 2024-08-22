@@ -1,15 +1,9 @@
+use crate::constants::DB_URL_ENV;
 use crate::utils;
 use anyhow::{anyhow, bail};
-use eightfish::{
-    EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
-};
-use eightfish_derive::EightFishModel;
-use serde::{Deserialize, Serialize};
+use eightfish::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
-const REDIS_URL_ENV: &str = "REDIS_URL";
-const DB_URL_ENV: &str = "DB_URL";
-const PAGESIZE: u64 = 25;
 
 use gutp_types::GutpPost;
 
@@ -157,73 +151,73 @@ impl GutpPostModule {
         Ok(Response::new(Status::Successful, info, results))
     }
 
-    fn list_by_profession(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
+    // fn list_by_profession(req: &mut Request) -> Result<Response> {
+    //     let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded()?;
+    //     let params = req.parse_urlencoded()?;
 
-        let profession = params
-            .get("profession")
-            .ok_or(anyhow!("profession is required"))?;
-        let (limit, offset) = utils::build_page_info(&params)?;
+    //     let profession = params
+    //         .get("profession")
+    //         .ok_or(anyhow!("profession is required"))?;
+    //     let (limit, offset) = utils::build_page_info(&params)?;
 
-        let sql = SqlBuilder::select_from(&GutpPost::model_name())
-            .fields(&GutpPost::fields())
-            .and_where_eq("profession", "$1")
-            .order_desc("created_time")
-            .limit(limit)
-            .offset(offset)
-            .sql()?;
-        let sql_param = ParameterValue::Str(profession);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+    //     let sql = SqlBuilder::select_from(&GutpPost::model_name())
+    //         .fields(&GutpPost::fields())
+    //         .and_where_eq("profession", "$1")
+    //         .order_desc("created_time")
+    //         .limit(limit)
+    //         .offset(offset)
+    //         .sql()?;
+    //     let sql_param = ParameterValue::Str(profession);
+    //     let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
-        let mut results: Vec<GutpPost> = vec![];
-        for row in rowset.rows {
-            let sp = GutpPost::from_row(row);
-            results.push(sp);
-        }
+    //     let mut results: Vec<GutpPost> = vec![];
+    //     for row in rowset.rows {
+    //         let sp = GutpPost::from_row(row);
+    //         results.push(sp);
+    //     }
 
-        let info = Info {
-            model_name: GutpPost::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
+    //     let info = Info {
+    //         model_name: GutpPost::model_name(),
+    //         action: HandlerCRUD::List,
+    //         extra: "".to_string(),
+    //     };
 
-        Ok(Response::new(Status::Successful, info, results))
-    }
+    //     Ok(Response::new(Status::Successful, info, results))
+    // }
 
-    fn list_by_appid(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
+    // fn list_by_appid(req: &mut Request) -> Result<Response> {
+    //     let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded()?;
+    //     let params = req.parse_urlencoded()?;
 
-        let appid = params.get("appid").ok_or(anyhow!("appid is required"))?;
-        let (limit, offset) = utils::build_page_info(&params)?;
+    //     let appid = params.get("appid").ok_or(anyhow!("appid is required"))?;
+    //     let (limit, offset) = utils::build_page_info(&params)?;
 
-        let sql = SqlBuilder::select_from(&GutpPost::model_name())
-            .fields(&GutpPost::fields())
-            .and_where_eq("appid", "$1")
-            .order_desc("created_time")
-            .limit(limit)
-            .offset(offset)
-            .sql()?;
-        let sql_param = ParameterValue::Str(appid);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+    //     let sql = SqlBuilder::select_from(&GutpPost::model_name())
+    //         .fields(&GutpPost::fields())
+    //         .and_where_eq("appid", "$1")
+    //         .order_desc("created_time")
+    //         .limit(limit)
+    //         .offset(offset)
+    //         .sql()?;
+    //     let sql_param = ParameterValue::Str(appid);
+    //     let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
-        let mut results: Vec<GutpPost> = vec![];
-        for row in rowset.rows {
-            let sp = GutpPost::from_row(row);
-            results.push(sp);
-        }
+    //     let mut results: Vec<GutpPost> = vec![];
+    //     for row in rowset.rows {
+    //         let sp = GutpPost::from_row(row);
+    //         results.push(sp);
+    //     }
 
-        let info = Info {
-            model_name: GutpPost::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
+    //     let info = Info {
+    //         model_name: GutpPost::model_name(),
+    //         action: HandlerCRUD::List,
+    //         extra: "".to_string(),
+    //     };
 
-        Ok(Response::new(Status::Successful, info, results))
-    }
+    //     Ok(Response::new(Status::Successful, info, results))
+    // }
 
     fn new_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
@@ -250,17 +244,17 @@ impl GutpPostModule {
             .get("subspace_id")
             .ok_or(anyhow!("subspace_id is required"))?
             .to_owned();
-        let extlink = params
-            .get("extlink")
-            .ok_or(anyhow!("extlink is required"))?
+        let ext_link = params
+            .get("ext_link")
+            .ok_or(anyhow!("ext_link is required"))?
             .to_owned();
-        let profession = params
-            .get("profession")
-            .ok_or(anyhow!("profession is required"))?
+        let category = params
+            .get("category")
+            .ok_or(anyhow!("category is required"))?
             .to_owned();
-        let appid = params
-            .get("appid")
-            .ok_or(anyhow!("appid is required"))?
+        let app_id = params
+            .get("app_id")
+            .ok_or(anyhow!("app_id is required"))?
             .to_owned();
         let is_public = params
             .get("is_public")
@@ -285,16 +279,15 @@ impl GutpPostModule {
             author_id,
             author_nickname,
             subspace_id,
-            extlink,
-            profession,
-            appid,
+            ext_link,
+            category,
+            app_id,
+            parent_post_id: "".to_string(),
             is_public,
             status: GutpPostStatus::Normal as i16,
             weight: GutpPostWeight::Normal as i16,
             created_time: time,
             updated_time: time,
-            create_time_on_chain: time,
-            update_time_on_chain: time,
         };
 
         let (sql_statement, sql_params) = post.build_insert();
@@ -329,7 +322,7 @@ impl GutpPostModule {
             .get("author_id")
             .ok_or(anyhow!("author_id is required"))?
             .to_owned();
-        let extlink = params
+        let ext_link = params
             .get("extlink")
             .ok_or(anyhow!("extlink is required"))?
             .to_owned();
@@ -353,10 +346,9 @@ impl GutpPostModule {
                     title,
                     content,
                     author_id,
-                    extlink,
+                    ext_link,
                     is_public,
                     updated_time: time,
-                    update_time_on_chain: time,
                     ..old_post
                 };
 
@@ -406,8 +398,8 @@ impl Module for GutpPostModule {
         router.get("/v1/post/list", Self::get_list);
         router.get("/v1/post/list_by_subspace", Self::list_by_subspace);
         router.get("/v1/post/list_by_author", Self::list_by_author);
-        router.get("/v1/post/list_by_profession", Self::list_by_profession);
-        router.get("/v1/post/list_by_appid", Self::list_by_appid);
+        // router.get("/v1/post/list_by_profession", Self::list_by_profession);
+        // router.get("/v1/post/list_by_appid", Self::list_by_appid);
         router.post("/v1/post/create", Self::new_one);
         router.post("/v1/post/update", Self::update);
         router.post("/v1/post/delete", Self::delete);
