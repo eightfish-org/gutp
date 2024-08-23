@@ -23,7 +23,7 @@ services:
   # gutp_app_1:
   #   image: gutp-app-a
   #   restart: always
-  #   command: spin up -f gutp_app_spin.toml -e REDIS_URL=redis://cache_1:6379 -e DB_URL="host=db_1 user=postgres password=postgres dbname=spin_dev sslmode=disable"
+  #   command: SPIN_VARIABLE_PROTO_ID="gutp" spin up -f spin_gutp.toml -e REDIS_URL="redis://cache_1:6379" -e DB_URL="host=db_1 user=postgres password=postgres dbname=gutp sslmode=disable"
   #   depends_on:
   #     - cache_1
   #     - db_1
@@ -34,7 +34,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=spin_dev
+      - POSTGRES_DB=gutp
     logging:
       options:
         max-size: 10m
