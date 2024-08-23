@@ -6,5 +6,5 @@ WORKDIR /eightfish
 RUN mkdir -p /eightfish/target/wasm32-wasi/release/
 
 COPY ./spin /usr/local/bin
-COPY ./gutp/spin-a.toml /eightfish/gutp_app_spin.toml
+COPY ./gutp/spin.toml /eightfish/spin_gutp.toml
 COPY ./target/wasm32-wasi/release/gutp.wasm /eightfish/target/wasm32-wasi/release/

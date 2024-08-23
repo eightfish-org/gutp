@@ -7,10 +7,11 @@ version = "1.0.0"
 description = "The General User's Text Persistence protocol."
 
 [variables]
+redis_host = { required = true }  # will be filled out in ENV
 proto_id = { required = true }  # will be filled out in ENV
 
 [[trigger.redis]]
-address = "redis://localhost:6379"
+address = "redis://{{redis_host}}:6379"
 channel = "vin2worker:{{proto_id}}"
 component = "gutp"
 
@@ -19,6 +20,7 @@ description = "The component GUTP."
 source = "target/wasm32-wasi/release/gutp.wasm"
 
 [component.gutp.variables]
+redis_host = "{{ redis_host }}"
 proto_id = "{{ proto_id }}"
 
 # How to build the Wasm module from source
