@@ -1,0 +1,247 @@
+version: '3.7'
+services:
+  #node1
+  vintage_1:
+    image: vintage
+    restart: always
+    volumes: 
+      - ./data4node/node1/blockchain-data:/data
+      - ./vintage4node/node1/vintage:/vintage
+    depends_on:
+      - cache_1
+    networks:
+      web:
+      blockchain:
+        ipv4_address: 172.30.0.11
+  
+  http_gate_1:
+    image: miketang84/eightfish-http_gate:20230623
+    restart: always
+    ports:
+      - "3000:3000"
+    command: spin up -f http_gate_spin.toml --listen 0.0.0.0:3000 -e REDIS_URL=redis://cache_1:6379
+    depends_on:
+      - cache_1
+    networks:
+      web:
+  gutp_app_1:
+    image: gutp-app
+    restart: always
+    command: spin up -f gutp_app_spin.toml -e SPIN_VARIABLE_REDIS_URL=redis://cache_1:6379 -e REDIS_URL=redis://cache_1:6379 -e DB_URL="host=db_1 user=postgres password=postgres dbname=spin_dev sslmode=disable"
+    depends_on:
+      - cache_1
+      - db_1
+    environment:
+      - SPIN_VARIABLE_REDIS_URL=redis://cache_1:6379
+      - SPIN_VARIABLE_DB_URL=postgres://db_1:5432
+    networks:
+      web:
+  db_1:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=spin_dev
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    volumes: 
+      - ./data4node/node1/postgres-data:/var/lib/postgresql/data
+      - ./init_pg.sql:/docker-entrypoint-initdb.d/init_pg.sql
+    networks:
+      web:
+  cache_1:
+    image: redis:latest
+    restart: always
+    command: redis-server --save 20 1 --loglevel warning 
+    volumes: 
+       - ./data4node/node1/redis-data:/data
+    networks:
+      web:  
+  #node2
+  vintage_2:
+    image: vintage
+    restart: always
+    volumes: 
+      - ./data4node/node2/blockchain-data:/data
+      - ./vintage4node/node2/vintage:/vintage
+    depends_on:
+      - cache_2
+    networks:
+      web:
+      blockchain:
+        ipv4_address: 172.30.0.22
+  
+  http_gate_2:
+    image: miketang84/eightfish-http_gate:20230623
+    restart: always
+    ports:
+      - "3001:3000"
+    command: spin up -f http_gate_spin.toml --listen 0.0.0.0:3000 -e REDIS_URL=redis://cache_2:6379
+    depends_on:
+      - cache_2
+    networks:
+      web:
+  gutp_app_2:
+    image: gutp-app
+    restart: always
+    command: spin up -f gutp_app_spin.toml -e SPIN_VARIABLE_REDIS_URL=redis://cache_2:6379 -e REDIS_URL=redis://cache_2:6379 -e DB_URL="host=db_2 user=postgres password=postgres dbname=spin_dev sslmode=disable"
+    depends_on:
+      - cache_2
+      - db_2
+    environment:
+      - SPIN_VARIABLE_REDIS_URL=redis://cache_2:6379
+      - SPIN_VARIABLE_DB_URL=postgres://db_2:5432
+    networks:
+      web:
+  db_2:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=spin_dev
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    volumes: 
+      - ./data4node/node2/postgres-data:/var/lib/postgresql/data
+      - ./init_pg.sql:/docker-entrypoint-initdb.d/init_pg.sql
+    networks:
+      web:
+  cache_2:
+    image: redis:latest
+    restart: always
+    command: redis-server --save 20 1 --loglevel warning 
+    volumes: 
+       - ./data4node/node2/redis-data:/data
+    networks:
+      web:  
+  #node3
+  vintage_3:
+    image: vintage
+    restart: always
+    volumes: 
+      - ./data4node/node3/blockchain-data:/data
+      - ./vintage4node/node3/vintage:/vintage
+    depends_on:
+      - cache_3
+    networks:
+      web:
+      blockchain:
+        ipv4_address: 172.30.0.33
+  http_gate_3:
+    image: miketang84/eightfish-http_gate:20230623
+    restart: always
+    ports:
+      - "3002:3000"
+    command: spin up -f http_gate_spin.toml --listen 0.0.0.0:3000 -e REDIS_URL=redis://cache_3:6379
+    depends_on:
+      - cache_3
+    networks:
+      web:
+  gutp_app_3:
+    image: gutp-app
+    restart: always
+    command: spin up -f gutp_app_spin.toml -e SPIN_VARIABLE_REDIS_URL=redis://cache_3:6379 -e REDIS_URL=redis://cache_3:6379 -e DB_URL="host=db_3 user=postgres password=postgres dbname=spin_dev sslmode=disable"
+    depends_on:
+      - cache_3
+      - db_3
+    environment:
+      - SPIN_VARIABLE_REDIS_URL=redis://cache_3:6379
+      - SPIN_VARIABLE_DB_URL=postgres://db_3:5432
+    networks:
+      web:
+  db_3:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=spin_dev
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    volumes: 
+      - ./data4node/node3/postgres-data:/var/lib/postgresql/data
+      - ./init_pg.sql:/docker-entrypoint-initdb.d/init_pg.sql
+    networks:
+      web:
+  cache_3:
+    image: redis:latest
+    restart: always
+    command: redis-server --save 20 1 --loglevel warning 
+    volumes: 
+       - ./data4node/node3/redis-data:/data
+    networks:
+      web:
+  #node4
+  vintage_4:
+    image: vintage
+    restart: always
+    volumes: 
+      - ./data4node/node4/blockchain-data:/data
+      - ./vintage4node/node4/vintage:/vintage
+    depends_on:
+      - cache_4
+    networks:
+      web:
+      blockchain:
+        ipv4_address: 172.30.0.44  
+  http_gate_4:
+    image: miketang84/eightfish-http_gate:20230623
+    restart: always
+    ports:
+      - "3003:3000"
+    command: spin up -f http_gate_spin.toml --listen 0.0.0.0:3000 -e REDIS_URL=redis://cache_4:6379
+    depends_on:
+      - cache_4
+    networks:
+      web:
+  gutp_app_4:
+    image: gutp-app
+    restart: always
+    command: spin up -f gutp_app_spin.toml -e SPIN_VARIABLE_REDIS_URL=redis://cache_4:6379 -e REDIS_URL=redis://cache_4:6379 -e DB_URL="host=db_4 user=postgres password=postgres dbname=spin_dev sslmode=disable"
+    depends_on:
+      - cache_4
+      - db_4
+    environment:
+      - SPIN_VARIABLE_REDIS_URL=redis://cache_4:6379
+      - SPIN_VARIABLE_DB_URL=postgres://db_4:5432
+    networks:
+      web:
+  db_4:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=spin_dev
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    volumes: 
+      - ./data4node/node4/postgres-data:/var/lib/postgresql/data
+      - ./init_pg.sql:/docker-entrypoint-initdb.d/init_pg.sql
+    networks:
+      web:
+  cache_4:
+    image: redis:latest
+    restart: always
+    command: redis-server --save 20 1 --loglevel warning 
+    volumes: 
+       - ./data4node/node4/redis-data:/data
+    networks:
+      web:
+networks:
+  web:
+  blockchain:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

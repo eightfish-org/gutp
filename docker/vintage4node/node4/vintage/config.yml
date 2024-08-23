@@ -1,0 +1,24 @@
+dev_mode: false
+blockchain:
+  db_path: /data/blockchain.db
+proxy:
+  redis_addr: redis://cache_4:6379
+node:
+  block_interval: 500
+  name: Node4
+  listen_addr: 172.30.0.44:8000
+  propose_weight: 1
+  vote_weight: 1
+  peers:
+    - name: Node1
+      address: 172.30.0.11:8000
+      propose_weight: 1
+      vote_weight: 1
+    - name: Node2
+      address: 172.30.0.22:8000
+      propose_weight: 1
+      vote_weight: 1
+    - name: Node3
+      address: 172.30.0.33:8000
+      propose_weight: 1
+      vote_weight: 1

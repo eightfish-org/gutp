@@ -1,0 +1,1 @@
+docker compose -f gutp-docker-compose-4node.yml up

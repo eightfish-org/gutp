@@ -1,15 +1,27 @@
-spin_version = "1"
+spin_manifest_version = 2
+
+[application]
 authors = ["Fermyon Engineering <engineering@fermyon.com>"]
 description = "A redis application."
 name = "gutp"
-trigger = {type = "redis", address = "redis://localhost:6379"}
 version = "0.1.0"
 
-[[component]]
-id = "redis-worker"
+[variables]
+redis_url = { required = true }
+db_url = { required = true }
+
+[application.trigger.redis]
+address = "{{ redis_url }}"
+
+[[trigger.redis]]
+channel = "proxy2spin"          # the channel that the trigger subscribes to
+component = "gutp"
+
+
+[component.gutp]
 source = "target/wasm32-wasi/release/gutp.wasm"
+allowed_outbound_hosts = ["{{ redis_url }}", "{{db_url}}"]
 #environment = { DB_URL = "host=localhost user=postgres password=123456 dbname=spin_dev sslmode=disable", REDIS_URL = "redis://127.0.0.1:6379"}
-[component.trigger]
-channel="proxy2spin"
-[component.build]
+
+[component.gutp.build]
 command = "cargo build --target wasm32-wasi --release"
