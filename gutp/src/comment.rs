@@ -309,13 +309,13 @@ impl GutpCommentModule {
 
 impl Module for GutpCommentModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/comment", Self::get_one);
-        router.get("/v1/comment/list", Self::get_list);
-        router.get("/v1/comment/list_by_post", Self::list_by_post);
-        router.get("/v1/comment/list_by_author", Self::list_by_author);
-        router.post("/v1/comment/create", Self::new_one);
-        router.post("/v1/comment/update", Self::update);
-        router.post("/v1/comment/delete", Self::delete);
+        router.get("/gutp/v1/comment", Self::get_one);
+        router.get("/gutp/v1/comment/list", Self::get_list);
+        router.get("/gutp/v1/comment/list_by_post", Self::list_by_post);
+        router.get("/gutp/v1/comment/list_by_author", Self::list_by_author);
+        router.post("/gutp/v1/comment/create", Self::new_one);
+        router.post("/gutp/v1/comment/update", Self::update);
+        router.post("/gutp/v1/comment/delete", Self::delete);
 
         Ok(())
     }

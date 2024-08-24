@@ -251,13 +251,13 @@ impl GutpPostTagModule {
 
 impl Module for GutpPostTagModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/posttag", Self::get_one);
-        router.get("/v1/posttag/list", Self::get_list);
-        router.get("/v1/posttag/list_by_post", Self::list_by_post);
-        router.get("/v1/posttag/list_by_tag", Self::list_by_tag);
-        router.post("/v1/posttag/create", Self::new_one);
-        router.post("/v1/posttag/update", Self::update);
-        router.post("/v1/posttag/delete", Self::delete);
+        router.get("/gutp/v1/posttag", Self::get_one);
+        router.get("/gutp/v1/posttag/list", Self::get_list);
+        router.get("/gutp/v1/posttag/list_by_post", Self::list_by_post);
+        router.get("/gutp/v1/posttag/list_by_tag", Self::list_by_tag);
+        router.post("/gutp/v1/posttag/create", Self::new_one);
+        router.post("/gutp/v1/posttag/update", Self::update);
+        router.post("/gutp/v1/posttag/delete", Self::delete);
 
         Ok(())
     }

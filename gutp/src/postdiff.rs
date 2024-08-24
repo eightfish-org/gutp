@@ -223,12 +223,12 @@ impl GutpPostDiffModule {
 
 impl Module for GutpPostDiffModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/postdiff", Self::get_one);
-        router.get("/v1/postdiff/list", Self::get_list);
-        router.get("/v1/postdiff/list_by_post", Self::list_by_post);
-        router.post("/v1/postdiff/create", Self::new_one);
-        router.post("/v1/postdiff/update", Self::update);
-        router.post("/v1/postdiff/delete", Self::delete);
+        router.get("/gutp/v1/postdiff", Self::get_one);
+        router.get("/gutp/v1/postdiff/list", Self::get_list);
+        router.get("/gutp/v1/postdiff/list_by_post", Self::list_by_post);
+        router.post("/gutp/v1/postdiff/create", Self::new_one);
+        router.post("/gutp/v1/postdiff/update", Self::update);
+        router.post("/gutp/v1/postdiff/delete", Self::delete);
 
         Ok(())
     }

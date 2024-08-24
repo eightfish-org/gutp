@@ -394,15 +394,15 @@ impl GutpPostModule {
 
 impl Module for GutpPostModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/post", Self::get_one);
-        router.get("/v1/post/list", Self::get_list);
-        router.get("/v1/post/list_by_subspace", Self::list_by_subspace);
-        router.get("/v1/post/list_by_author", Self::list_by_author);
-        // router.get("/v1/post/list_by_profession", Self::list_by_profession);
-        // router.get("/v1/post/list_by_appid", Self::list_by_appid);
-        router.post("/v1/post/create", Self::new_one);
-        router.post("/v1/post/update", Self::update);
-        router.post("/v1/post/delete", Self::delete);
+        router.get("/gutp/v1/post", Self::get_one);
+        router.get("/gutp/v1/post/list", Self::get_list);
+        router.get("/gutp/v1/post/list_by_subspace", Self::list_by_subspace);
+        router.get("/gutp/v1/post/list_by_author", Self::list_by_author);
+        // router.get("/gutp/v1/post/list_by_profession", Self::list_by_profession);
+        // router.get("/gutp/v1/post/list_by_appid", Self::list_by_appid);
+        router.post("/gutp/v1/post/create", Self::new_one);
+        router.post("/gutp/v1/post/update", Self::update);
+        router.post("/gutp/v1/post/delete", Self::delete);
 
         Ok(())
     }

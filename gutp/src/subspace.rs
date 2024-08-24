@@ -365,14 +365,17 @@ impl GutpSubspaceModule {
 
 impl Module for GutpSubspaceModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/subspace", Self::get_one);
-        router.get("/v1/subspace/list", Self::get_list);
-        router.get("/v1/subspace/list_by_owner", Self::list_by_owner);
-        router.get("/v1/subspace/list_by_profession", Self::list_by_profession);
-        router.get("/v1/subspace/list_by_appid", Self::list_by_appid);
-        router.post("/v1/subspace/create", Self::new_one);
-        router.post("/v1/subspace/update", Self::update);
-        router.post("/v1/subspace/delete", Self::delete);
+        router.get("/gutp/v1/subspace", Self::get_one);
+        router.get("/gutp/v1/subspace/list", Self::get_list);
+        router.get("/gutp/v1/subspace/list_by_owner", Self::list_by_owner);
+        router.get(
+            "/gutp/v1/subspace/list_by_profession",
+            Self::list_by_profession,
+        );
+        router.get("/gutp/v1/subspace/list_by_appid", Self::list_by_appid);
+        router.post("/gutp/v1/subspace/create", Self::new_one);
+        router.post("/gutp/v1/subspace/update", Self::update);
+        router.post("/gutp/v1/subspace/delete", Self::delete);
 
         Ok(())
     }

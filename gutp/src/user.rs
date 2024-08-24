@@ -219,11 +219,11 @@ impl GutpUserModule {
 
 impl Module for GutpUserModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/user", Self::get_one);
-        router.get("/v1/user/get_by_account", Self::get_by_account);
-        router.post("/v1/user/create", Self::new_user);
-        router.post("/v1/user/update", Self::update);
-        router.post("/v1/user/delete", Self::delete);
+        router.get("/gutp/v1/user", Self::get_one);
+        router.get("/gutp/v1/user/get_by_account", Self::get_by_account);
+        router.post("/gutp/v1/user/create", Self::new_user);
+        router.post("/gutp/v1/user/update", Self::update);
+        router.post("/gutp/v1/user/delete", Self::delete);
 
         Ok(())
     }

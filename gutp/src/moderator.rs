@@ -318,14 +318,17 @@ impl GutpModeratorModule {
 
 impl Module for GutpModeratorModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/moderator", Self::get_one);
-        router.get("/v1/moderator/list", Self::get_list);
-        router.get("/v1/moderator/list_by_subspace", Self::list_by_subspace);
-        router.get("/v1/moderator/list_by_user", Self::list_by_user);
-        router.get("/v1/moderator/list_by_tag", Self::list_by_tag);
-        router.post("/v1/moderator/create", Self::new_one);
-        router.post("/v1/moderator/update", Self::update);
-        router.post("/v1/moderator/delete", Self::delete);
+        router.get("/gutp/v1/moderator", Self::get_one);
+        router.get("/gutp/v1/moderator/list", Self::get_list);
+        router.get(
+            "/gutp/v1/moderator/list_by_subspace",
+            Self::list_by_subspace,
+        );
+        router.get("/gutp/v1/moderator/list_by_user", Self::list_by_user);
+        router.get("/gutp/v1/moderator/list_by_tag", Self::list_by_tag);
+        router.post("/gutp/v1/moderator/create", Self::new_one);
+        router.post("/gutp/v1/moderator/update", Self::update);
+        router.post("/gutp/v1/moderator/delete", Self::delete);
 
         Ok(())
     }

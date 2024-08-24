@@ -266,13 +266,13 @@ impl GutpTagModule {
 
 impl Module for GutpTagModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/tag", Self::get_one);
-        router.get("/v1/tag/list", Self::get_list);
-        router.get("/v1/tag/list_by_subspace", Self::list_by_subspace);
-        router.get("/v1/tag/list_by_creator", Self::list_by_creator);
-        router.post("/v1/tag/create", Self::new_one);
-        router.post("/v1/tag/update", Self::update);
-        router.post("/v1/tag/delete", Self::delete);
+        router.get("/gutp/v1/tag", Self::get_one);
+        router.get("/gutp/v1/tag/list", Self::get_list);
+        router.get("/gutp/v1/tag/list_by_subspace", Self::list_by_subspace);
+        router.get("/gutp/v1/tag/list_by_creator", Self::list_by_creator);
+        router.post("/gutp/v1/tag/create", Self::new_one);
+        router.post("/gutp/v1/tag/update", Self::update);
+        router.post("/gutp/v1/tag/delete", Self::delete);
 
         Ok(())
     }
