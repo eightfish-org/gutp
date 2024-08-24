@@ -23,7 +23,7 @@ services:
   gutp_app_1:
     image: gutp-app-a
     restart: always
-    command: SPIN_VARIABLE_REDIS_HOST="cache_1" SPIN_VARIABLE_PROTO_ID="gutp" spin up -f spin_gutp.toml -e REDIS_URL="redis://cache_1:6379" -e DB_URL="host=db_1 user=postgres password=postgres dbname=gutp sslmode=disable"
+    command: SPIN_VARIABLE_REDIS_HOST="cache_1" SPIN_VARIABLE_PROTO_ID="gutp" spin up -f spin_gutp.toml -e REDIS_URL_ENV="redis://cache_1:6379" -e DB_URL_ENV="host=db_1 user=postgres password=postgres dbname=gutp sslmode=disable"
     depends_on:
       - cache_1
       - db_1
