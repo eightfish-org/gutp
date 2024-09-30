@@ -1,7 +1,7 @@
 use crate::constants::DB_URL_ENV;
 use crate::utils;
 use anyhow::{anyhow, bail};
-use eightfish::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
+use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
 use gutp_types::GutpPostDiff;
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
@@ -11,12 +11,13 @@ pub struct GutpPostDiffModule;
 impl GutpPostDiffModule {
     fn get_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
         let postdiff_id = params.get("id").ok_or(anyhow!("postdiff_id is required"))?;
 
         let (sql, sql_params) = GutpPostDiff::build_get_by_id(postdiff_id);
-        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        let rowset = pg_conn.query(&sql, &sql_params)?;
 
         let results = if let Some(row) = rowset.rows.into_iter().next() {
             vec![GutpPostDiff::from_row(row)]
@@ -35,6 +36,7 @@ impl GutpPostDiffModule {
 
     fn get_list(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -45,7 +47,7 @@ impl GutpPostDiffModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let rowset = pg::query(&pg_addr, &sql, &[])?;
+        let rowset = pg_conn.query(&sql, &[])?;
 
         let mut results: Vec<GutpPostDiff> = vec![];
         for row in rowset.rows {
@@ -64,6 +66,7 @@ impl GutpPostDiffModule {
 
     fn list_by_post(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -79,8 +82,8 @@ impl GutpPostDiffModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(post_id);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+        let sql_param = ParameterValue::Str(post_id.clone());
+        let rowset = pg_conn.query(&sql, &[sql_param])?;
 
         let mut results: Vec<GutpPostDiff> = vec![];
         for row in rowset.rows {
@@ -99,6 +102,7 @@ impl GutpPostDiffModule {
 
     fn new_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -135,7 +139,7 @@ impl GutpPostDiffModule {
         };
 
         let (sql, sql_params) = postdiff.build_insert();
-        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
+        _ = pg_conn.execute(&sql, &sql_params)?;
 
         let results: Vec<GutpPostDiff> = vec![postdiff];
 
@@ -150,6 +154,7 @@ impl GutpPostDiffModule {
 
     fn update(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -169,7 +174,7 @@ impl GutpPostDiffModule {
 
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpPostDiff::build_get_by_id(id);
-        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        let rowset = pg_conn.query(&sql, &sql_params)?;
         match rowset.rows.into_iter().next() {
             Some(row) => {
                 let old_postdiff = GutpPostDiff::from_row(row);
@@ -182,7 +187,7 @@ impl GutpPostDiffModule {
                 };
 
                 let (sql, sql_params) = postdiff.build_update();
-                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
+                _ = pg_conn.execute(&sql, &sql_params)?;
 
                 let results: Vec<GutpPostDiff> = vec![postdiff];
 
@@ -202,13 +207,14 @@ impl GutpPostDiffModule {
 
     fn delete(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("id is required."))?;
 
         let (sql, sql_params) = GutpPostDiff::build_delete(id);
-        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
+        _ = pg_conn.execute(&sql, &sql_params)?;
 
         let info = Info {
             model_name: GutpPostDiff::model_name(),

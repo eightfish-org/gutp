@@ -3,7 +3,9 @@ use anyhow::Result;
 use bytes::Bytes;
 use spin_sdk::redis_component;
 
-use eightfish::{App as EightFishApp, GlobalFilter, Request, Response, Result as EightFishResult};
+use eightfish_sdk::{
+    App as EightFishApp, GlobalFilter, Request, Response, Result as EightFishResult,
+};
 
 mod comment;
 mod constants;
@@ -50,7 +52,7 @@ fn on_message(message: Bytes) -> Result<()> {
     let app = build_app();
     let aw = spin_worker::Worker::mount(app);
 
-    aw.work(message).unwrap();
+    aw.work(message)?;
 
     Ok(())
 }

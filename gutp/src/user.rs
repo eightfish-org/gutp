@@ -1,7 +1,7 @@
 use crate::constants::DB_URL_ENV;
 use crate::utils;
 use anyhow::{anyhow, bail};
-use eightfish::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
+use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
 use gutp_types::GutpUser;
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
@@ -22,13 +22,14 @@ pub struct GutpUserModule;
 impl GutpUserModule {
     fn get_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
         let entity_id = params.get("id").ok_or(anyhow!("id is required"))?;
 
         let (sql, sql_params) = GutpUser::build_get_by_id(entity_id);
-        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        let rowset = pg_conn.query(&sql, &sql_params)?;
 
         let mut results: Vec<GutpUser> = vec![];
         for row in rowset.rows {
@@ -47,6 +48,7 @@ impl GutpUserModule {
 
     fn get_by_account(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -62,8 +64,8 @@ impl GutpUserModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(&account);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+        let sql_param = ParameterValue::Str(account.clone());
+        let rowset = pg_conn.query(&sql, &[sql_param])?;
 
         let mut results: Vec<GutpUser> = vec![];
         for row in rowset.rows {
@@ -82,6 +84,7 @@ impl GutpUserModule {
 
     fn new_user(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -125,7 +128,7 @@ impl GutpUserModule {
         };
 
         let (sql, sql_params) = article.build_insert();
-        _ = pg::execute(&pg_addr, &sql, &sql_params);
+        _ = pg_conn.execute(&sql, &sql_params);
 
         let results: Vec<GutpUser> = vec![article];
 
@@ -139,7 +142,8 @@ impl GutpUserModule {
     }
 
     fn update(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV).unwrap();
+        let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -163,7 +167,7 @@ impl GutpUserModule {
 
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpUser::build_get_by_id(id);
-        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        let rowset = pg_conn.query(&sql, &sql_params)?;
         match rowset.rows.into_iter().next() {
             Some(row) => {
                 let old_user = GutpUser::from_row(row);
@@ -177,7 +181,7 @@ impl GutpUserModule {
                 };
 
                 let (sql, sql_params) = user.build_update();
-                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
+                _ = pg_conn.execute(&sql, &sql_params)?;
 
                 let results: Vec<GutpUser> = vec![user];
 
@@ -197,13 +201,14 @@ impl GutpUserModule {
 
     fn delete(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("id is required"))?;
 
         let (sql, sql_params) = GutpUser::build_delete(id);
-        _ = pg::execute(&pg_addr, &sql, &sql_params);
+        _ = pg_conn.execute(&sql, &sql_params);
 
         let results: Vec<GutpUser> = vec![];
 

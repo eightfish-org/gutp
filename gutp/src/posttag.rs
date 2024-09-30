@@ -1,5 +1,5 @@
 use anyhow::{anyhow, bail};
-use eightfish::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
+use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
 
@@ -12,12 +12,13 @@ pub struct GutpPostTagModule;
 impl GutpPostTagModule {
     fn get_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
         let posttag_id = params.get("id").ok_or(anyhow!("posttag_id is required"))?;
 
         let (sql, sql_params) = GutpPostTag::build_get_by_id(posttag_id);
-        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        let rowset = pg_conn.query(&sql, &sql_params)?;
 
         let results = if let Some(row) = rowset.rows.into_iter().next() {
             vec![GutpPostTag::from_row(row)]
@@ -36,6 +37,7 @@ impl GutpPostTagModule {
 
     fn get_list(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
         let (limit, offset) = utils::build_page_info(&params)?;
@@ -45,7 +47,7 @@ impl GutpPostTagModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let rowset = pg::query(&pg_addr, &sql, &[])?;
+        let rowset = pg_conn.query(&sql, &[])?;
 
         let mut results: Vec<GutpPostTag> = vec![];
         for row in rowset.rows {
@@ -64,6 +66,7 @@ impl GutpPostTagModule {
 
     fn list_by_post(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -79,8 +82,8 @@ impl GutpPostTagModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(post_id);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+        let sql_param = ParameterValue::Str(post_id.clone());
+        let rowset = pg_conn.query(&sql, &[sql_param])?;
 
         let mut results: Vec<GutpPostTag> = vec![];
         for row in rowset.rows {
@@ -99,6 +102,7 @@ impl GutpPostTagModule {
 
     fn list_by_tag(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -111,8 +115,8 @@ impl GutpPostTagModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(tag_id);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+        let sql_param = ParameterValue::Str(tag_id.clone());
+        let rowset = pg_conn.query(&sql, &[sql_param])?;
 
         let mut results: Vec<GutpPostTag> = vec![];
         for row in rowset.rows {
@@ -131,6 +135,7 @@ impl GutpPostTagModule {
 
     fn new_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -163,7 +168,7 @@ impl GutpPostTagModule {
 
         // construct a sql statement and param
         let (sql, sql_params) = posttag.build_insert();
-        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
+        _ = pg_conn.execute(&sql, &sql_params)?;
 
         let results: Vec<GutpPostTag> = vec![posttag];
 
@@ -178,6 +183,7 @@ impl GutpPostTagModule {
 
     fn update(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -198,7 +204,7 @@ impl GutpPostTagModule {
 
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpPostTag::build_get_by_id(id);
-        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        let rowset = pg_conn.query(&sql, &sql_params)?;
         match rowset.rows.into_iter().next() {
             Some(row) => {
                 let old_posttag = GutpPostTag::from_row(row);
@@ -210,7 +216,7 @@ impl GutpPostTagModule {
                 };
 
                 let (sql, sql_params) = posttag.build_update();
-                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
+                _ = pg_conn.execute(&sql, &sql_params)?;
 
                 let results: Vec<GutpPostTag> = vec![posttag];
 
@@ -230,13 +236,14 @@ impl GutpPostTagModule {
 
     fn delete(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("delete action: no id"))?;
 
         let (sql, sql_params) = GutpPostTag::build_delete(id.as_str());
-        let _er = pg::execute(&pg_addr, &sql, &sql_params)?;
+        let _er = pg_conn.execute(&sql, &sql_params)?;
 
         let info = Info {
             model_name: GutpPostTag::model_name(),
