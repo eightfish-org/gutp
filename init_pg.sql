@@ -6,7 +6,7 @@ CREATE TABLE gutpuser (
     avatar TEXT NOT NULL,
     role SMALLINT NOT NULL,                     -- role for simple permission system
     status SMALLINT NOT NULL,                   -- current status of this account, like normal, frozen, deleted, ...
-    created_time BIGINT NOT NULL,
+    created_time BIGINT NOT NULL
 );
 CREATE TABLE gutpuser_idhash (
 	id TEXT PRIMARY KEY,
@@ -25,7 +25,7 @@ CREATE TABLE gutpsubspace (
     owner_id TEXT NOT NULL,                     -- is this subspace a personal blog space, owner_id is the person's id
     category TEXT NOT NULL,                     -- the category of this subspace 
     app_id TEXT NOT NULL,                       -- multiple app's can be connected to the same gutp instance, so use app_id to distinguish
-    created_time BIGINT NOT NULL,
+    created_time BIGINT NOT NULL
 );
 CREATE TABLE gutpsubspace_idhash (
 	id TEXT PRIMARY KEY,
@@ -47,7 +47,7 @@ CREATE TABLE gutppost (
     category TEXT NOT NULL,                     -- the same meaning with the one of subspace, used to retreive quickly 
     app_id TEXT NOT NULL,                       -- which app's post
     created_time BIGINT NOT NULL,
-    updated_time BIGINT NOT NULL,               -- the last time timestamp of updating
+    updated_time BIGINT NOT NULL                -- the last time timestamp of updating
 );
 CREATE TABLE gutppost_idhash (
 	id TEXT PRIMARY KEY,
@@ -64,7 +64,7 @@ CREATE TABLE gutpcomment (
     is_public BOOLEAN NOT NULL,
     status SMALLINT NOT NULL,
     weight INTEGER NOT NULL,
-    created_time BIGINT NOT NULL,
+    created_time BIGINT NOT NULL
 );
 CREATE TABLE gutpcomment_idhash (
 	id TEXT PRIMARY KEY,
@@ -78,7 +78,7 @@ CREATE TABLE gutptag (
     subspace_id TEXT NOT NULL,                  -- which subspace this tag belongs to
     is_public BOOLEAN NOT NULL,                 -- is this tag a public (plaintext) tag
     weight SMALLINT NOT NULL,
-    created_time BIGINT NOT NULL,
+    created_time BIGINT NOT NULL
 );
 CREATE TABLE gutptag_idhash (
 	id TEXT PRIMARY KEY,
@@ -90,7 +90,7 @@ CREATE TABLE gutpposttag (
     id TEXT PRIMARY KEY,
     post_id TEXT NOT NULL,
     tag_id TEXT NOT NULL,
-    created_time BIGINT NOT NULL,
+    created_time BIGINT NOT NULL
 );
 CREATE TABLE gutpposttag_idhash (
 	id TEXT PRIMARY KEY,
@@ -103,7 +103,7 @@ CREATE TABLE gutppostdiff (
     post_id TEXT NOT NULL,                            -- which post's diff
     diff TEXT NOT NULL,                               -- diff bewteen old version and new version
     version_num INTEGER NOT NULL,                     -- will increase 1 by every modification
-    created_time BIGINT NOT NULL,
+    created_time BIGINT NOT NULL
 );
 CREATE TABLE gutppostdiff_idhash (
 	id TEXT PRIMARY KEY,
@@ -118,7 +118,7 @@ CREATE TABLE gutpmoderator (
     is_subspace_moderator BOOLEAN NOT NULL,           -- is it a subspace-scoped moderator
     tag_id TEXT,                                      -- or it is a tag-scoped moderator, bound to the tag
     permission_level SMALLINT NOT NULL,               -- a simple mechanism for permission control
-    created_time BIGINT NOT NULL,
+    created_time BIGINT NOT NULL
 );
 CREATE TABLE gutpmoderator_idhash (
 	id TEXT PRIMARY KEY,
@@ -137,7 +137,7 @@ CREATE TABLE gutpextobj (
     comment_id TEXT NOT NULL,                         -- if has value, it is an extension obj to this comment
     is_public BOOLEAN NOT NULL,                       -- is it's data public/plaintext
     weight SMALLINT NOT NULL,                         -- for ranking
-    created_time BIGINT NOT NULL,
+    created_time BIGINT NOT NULL
 );
 CREATE TABLE gutpextobj_idhash (
 	id TEXT PRIMARY KEY,

@@ -329,8 +329,8 @@ impl GutpPostModule {
             .ok_or(anyhow!("author_id is required"))?
             .to_owned();
         let ext_link = params
-            .get("extlink")
-            .ok_or(anyhow!("extlink is required"))?
+            .get("ext_link")
+            .ok_or(anyhow!("ext_link is required"))?
             .to_owned();
         let is_public = params
             .get("is_public")
