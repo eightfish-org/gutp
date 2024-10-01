@@ -1,11 +1,5 @@
-use std::any;
-
 use anyhow::{anyhow, bail};
-use eightfish::{
-    EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
-};
-use eightfish_derive::EightFishModel;
-use serde::{Deserialize, Serialize};
+use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
 
@@ -36,13 +30,14 @@ pub struct GutpSubspaceModule;
 impl GutpSubspaceModule {
     fn get_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
         let subspace_id = params.get("id").ok_or(anyhow!("no id"))?;
 
         let (sql, sql_params) = GutpSubspace::build_get_by_id(subspace_id);
-        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        let rowset = pg_conn.query(&sql, &sql_params)?;
 
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
@@ -62,6 +57,7 @@ impl GutpSubspaceModule {
 
     fn get_list(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -72,7 +68,7 @@ impl GutpSubspaceModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let rowset = pg::query(&pg_addr, &sql, &[])?;
+        let rowset = pg_conn.query(&sql, &[])?;
 
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
@@ -91,6 +87,7 @@ impl GutpSubspaceModule {
 
     fn list_by_owner(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
         // println!("in handler subspace get_one: params: {:?}", params);
@@ -107,8 +104,8 @@ impl GutpSubspaceModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(owner_id);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+        let sql_param = ParameterValue::Str(owner_id.clone());
+        let rowset = pg_conn.query(&sql, &[sql_param])?;
 
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
@@ -125,26 +122,27 @@ impl GutpSubspaceModule {
         Ok(Response::new(Status::Successful, info, results))
     }
 
-    fn list_by_profession(req: &mut Request) -> Result<Response> {
+    fn list_by_category(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
         // println!("in handler subspace get_one: params: {:?}", params);
 
-        let profession = params
-            .get("profession")
-            .ok_or(anyhow!("profession is required"))?;
+        let category = params
+            .get("category")
+            .ok_or(anyhow!("category is required"))?;
 
         let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
             .fields(&GutpSubspace::fields())
-            .and_where_eq("profession", "$1")
+            .and_where_eq("category", "$1")
             .order_desc("created_time")
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(profession);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+        let sql_param = ParameterValue::Str(category.clone());
+        let rowset = pg_conn.query(&sql, &[sql_param])?;
 
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
@@ -161,23 +159,24 @@ impl GutpSubspaceModule {
         Ok(Response::new(Status::Successful, info, results))
     }
 
-    fn list_by_appid(req: &mut Request) -> Result<Response> {
+    fn list_by_app_id(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
-        let appid = params.get("appid").ok_or(anyhow!("appid is required"))?;
+        let app_id = params.get("app_id").ok_or(anyhow!("app_id is required"))?;
 
         let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
             .fields(&GutpSubspace::fields())
-            .and_where_eq("appid", "$1")
+            .and_where_eq("app_id", "$1")
             .order_desc("created_time")
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(appid);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+        let sql_param = ParameterValue::Str(app_id.clone());
+        let rowset = pg_conn.query(&sql, &[sql_param])?;
 
         let mut results: Vec<GutpSubspace> = vec![];
         for row in rowset.rows {
@@ -196,6 +195,7 @@ impl GutpSubspaceModule {
 
     fn new_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -215,12 +215,12 @@ impl GutpSubspaceModule {
             .get("owner_id")
             .ok_or(anyhow!("missing owner_id"))?
             .to_owned();
-        let profession = params
-            .get("profession")
+        let category = params
+            .get("category")
             .ok_or(anyhow!("missing profession"))?
             .to_owned();
-        let appid = params
-            .get("appid")
+        let app_id = params
+            .get("app_id")
             .ok_or(anyhow!("missing appid"))?
             .to_owned();
         let is_public = params
@@ -247,19 +247,17 @@ impl GutpSubspaceModule {
             description,
             banner,
             owner_id,
-            profession,
-            appid,
+            category,
+            app_id,
             is_public,
             status: GutpSubspaceStatus::Normal as i16,
             weight: GutpSubspaceWeight::Normal as i16,
             created_time: time,
-            create_time_on_chain: time,
-            update_time_on_chain: time,
             slug,
         };
 
         let (sql, sql_params) = subspace.build_insert();
-        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
+        _ = pg_conn.execute(&sql, &sql_params)?;
 
         let results: Vec<GutpSubspace> = vec![subspace];
 
@@ -274,6 +272,7 @@ impl GutpSubspaceModule {
 
     fn update(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -294,26 +293,27 @@ impl GutpSubspaceModule {
             .get("owner_id")
             .ok_or(anyhow!("owner_id is required"))?
             .to_owned();
-        let profession = params
-            .get("profession")
+        let category = params
+            .get("category")
             .ok_or(anyhow!("profession is required"))?
             .to_owned();
-        let appid = params
-            .get("appid")
+        let app_id = params
+            .get("app_id")
             .ok_or(anyhow!("appid is required"))?
             .to_owned();
         let is_public = params
             .get("is_public")
             .ok_or(anyhow!("is_public is required"))?
             .parse::<bool>()?;
-        let time = req
-            .ext()
-            .get("time")
-            .ok_or(anyhow!("time is required"))?
-            .parse::<i64>()?;
+        // let time = req
+        //     .ext()
+        //     .get("time")
+        //     .ok_or(anyhow!("time is required"))?
+        //     .parse::<i64>()?;
+
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpSubspace::build_get_by_id(id);
-        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        let rowset = pg_conn.query(&sql, &sql_params)?;
         match rowset.rows.into_iter().next() {
             Some(row) => {
                 let old_subspace = GutpSubspace::from_row(row);
@@ -324,15 +324,14 @@ impl GutpSubspaceModule {
                     description,
                     banner,
                     owner_id,
-                    profession,
-                    appid,
+                    category,
+                    app_id,
                     is_public,
-                    update_time_on_chain: time,
                     ..old_subspace
                 };
 
                 let (sql, sql_params) = subspace.build_update();
-                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
+                _ = pg_conn.execute(&sql, &sql_params)?;
 
                 let results: Vec<GutpSubspace> = vec![subspace];
 
@@ -352,13 +351,14 @@ impl GutpSubspaceModule {
 
     fn delete(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("missing id"))?;
 
         let (sql_statement, sql_params) = GutpSubspace::build_delete(id);
-        _ = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        _ = pg_conn.execute(&sql_statement, &sql_params)?;
 
         let info = Info {
             model_name: GutpSubspace::model_name(),
@@ -373,14 +373,14 @@ impl GutpSubspaceModule {
 
 impl Module for GutpSubspaceModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/subspace", Self::get_one);
-        router.get("/v1/subspace/list", Self::get_list);
-        router.get("/v1/subspace/list_by_owner", Self::list_by_owner);
-        router.get("/v1/subspace/list_by_profession", Self::list_by_profession);
-        router.get("/v1/subspace/list_by_appid", Self::list_by_appid);
-        router.post("/v1/subspace/create", Self::new_one);
-        router.post("/v1/subspace/update", Self::update);
-        router.post("/v1/subspace/delete", Self::delete);
+        router.get("/gutp/v1/subspace", Self::get_one);
+        router.get("/gutp/v1/subspace/list", Self::get_list);
+        router.get("/gutp/v1/subspace/list_by_owner", Self::list_by_owner);
+        router.get("/gutp/v1/subspace/list_by_category", Self::list_by_category);
+        router.get("/gutp/v1/subspace/list_by_app_id", Self::list_by_app_id);
+        router.post("/gutp/v1/subspace/create", Self::new_one);
+        router.post("/gutp/v1/subspace/update", Self::update);
+        router.post("/gutp/v1/subspace/delete", Self::delete);
 
         Ok(())
     }

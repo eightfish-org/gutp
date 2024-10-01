@@ -1,15 +1,9 @@
+use crate::constants::DB_URL_ENV;
 use crate::utils;
 use anyhow::{anyhow, bail};
-use eightfish::{
-    EightFishModel, HandlerCRUD, Info, Module, Request, Response, Result, Router, Status,
-};
-use eightfish_derive::EightFishModel;
-use serde::{Deserialize, Serialize};
+use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
-const REDIS_URL_ENV: &str = "REDIS_URL";
-const DB_URL_ENV: &str = "DB_URL";
-const PAGESIZE: u64 = 25;
 
 use gutp_types::GutpPost;
 
@@ -35,12 +29,13 @@ pub struct GutpPostModule;
 impl GutpPostModule {
     fn get_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
         let post_id = params.get("id").ok_or(anyhow!("id is required"))?;
 
         let (sql, sql_params) = GutpPost::build_get_by_id(post_id);
-        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        let rowset = pg_conn.query(&sql, &sql_params)?;
 
         let results = if let Some(row) = rowset.rows.into_iter().next() {
             vec![GutpPost::from_row(row)]
@@ -59,6 +54,7 @@ impl GutpPostModule {
 
     fn get_list(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -70,7 +66,7 @@ impl GutpPostModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let rowset = pg::query(&pg_addr, &sql, &[])?;
+        let rowset = pg_conn.query(&sql, &[])?;
 
         let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
@@ -89,6 +85,7 @@ impl GutpPostModule {
 
     fn list_by_subspace(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -104,8 +101,8 @@ impl GutpPostModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(subspace_id);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+        let sql_param = ParameterValue::Str(subspace_id.clone());
+        let rowset = pg_conn.query(&sql, &[sql_param])?;
 
         let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
@@ -124,6 +121,7 @@ impl GutpPostModule {
 
     fn list_by_author(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -139,8 +137,8 @@ impl GutpPostModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(author_id);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+        let sql_param = ParameterValue::Str(author_id.clone());
+        let rowset = pg_conn.query(&sql, &[sql_param])?;
 
         let mut results: Vec<GutpPost> = vec![];
         for row in rowset.rows {
@@ -157,76 +155,77 @@ impl GutpPostModule {
         Ok(Response::new(Status::Successful, info, results))
     }
 
-    fn list_by_profession(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
+    // fn list_by_profession(req: &mut Request) -> Result<Response> {
+    //     let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded()?;
+    //     let params = req.parse_urlencoded()?;
 
-        let profession = params
-            .get("profession")
-            .ok_or(anyhow!("profession is required"))?;
-        let (limit, offset) = utils::build_page_info(&params)?;
+    //     let profession = params
+    //         .get("profession")
+    //         .ok_or(anyhow!("profession is required"))?;
+    //     let (limit, offset) = utils::build_page_info(&params)?;
 
-        let sql = SqlBuilder::select_from(&GutpPost::model_name())
-            .fields(&GutpPost::fields())
-            .and_where_eq("profession", "$1")
-            .order_desc("created_time")
-            .limit(limit)
-            .offset(offset)
-            .sql()?;
-        let sql_param = ParameterValue::Str(profession);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+    //     let sql = SqlBuilder::select_from(&GutpPost::model_name())
+    //         .fields(&GutpPost::fields())
+    //         .and_where_eq("profession", "$1")
+    //         .order_desc("created_time")
+    //         .limit(limit)
+    //         .offset(offset)
+    //         .sql()?;
+    //     let sql_param = ParameterValue::Str(profession);
+    //     let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
-        let mut results: Vec<GutpPost> = vec![];
-        for row in rowset.rows {
-            let sp = GutpPost::from_row(row);
-            results.push(sp);
-        }
+    //     let mut results: Vec<GutpPost> = vec![];
+    //     for row in rowset.rows {
+    //         let sp = GutpPost::from_row(row);
+    //         results.push(sp);
+    //     }
 
-        let info = Info {
-            model_name: GutpPost::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
+    //     let info = Info {
+    //         model_name: GutpPost::model_name(),
+    //         action: HandlerCRUD::List,
+    //         extra: "".to_string(),
+    //     };
 
-        Ok(Response::new(Status::Successful, info, results))
-    }
+    //     Ok(Response::new(Status::Successful, info, results))
+    // }
 
-    fn list_by_appid(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
+    // fn list_by_appid(req: &mut Request) -> Result<Response> {
+    //     let pg_addr = std::env::var(DB_URL_ENV)?;
 
-        let params = req.parse_urlencoded()?;
+    //     let params = req.parse_urlencoded()?;
 
-        let appid = params.get("appid").ok_or(anyhow!("appid is required"))?;
-        let (limit, offset) = utils::build_page_info(&params)?;
+    //     let appid = params.get("appid").ok_or(anyhow!("appid is required"))?;
+    //     let (limit, offset) = utils::build_page_info(&params)?;
 
-        let sql = SqlBuilder::select_from(&GutpPost::model_name())
-            .fields(&GutpPost::fields())
-            .and_where_eq("appid", "$1")
-            .order_desc("created_time")
-            .limit(limit)
-            .offset(offset)
-            .sql()?;
-        let sql_param = ParameterValue::Str(appid);
-        let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
+    //     let sql = SqlBuilder::select_from(&GutpPost::model_name())
+    //         .fields(&GutpPost::fields())
+    //         .and_where_eq("appid", "$1")
+    //         .order_desc("created_time")
+    //         .limit(limit)
+    //         .offset(offset)
+    //         .sql()?;
+    //     let sql_param = ParameterValue::Str(appid);
+    //     let rowset = pg::query(&pg_addr, &sql, &[sql_param])?;
 
-        let mut results: Vec<GutpPost> = vec![];
-        for row in rowset.rows {
-            let sp = GutpPost::from_row(row);
-            results.push(sp);
-        }
+    //     let mut results: Vec<GutpPost> = vec![];
+    //     for row in rowset.rows {
+    //         let sp = GutpPost::from_row(row);
+    //         results.push(sp);
+    //     }
 
-        let info = Info {
-            model_name: GutpPost::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
+    //     let info = Info {
+    //         model_name: GutpPost::model_name(),
+    //         action: HandlerCRUD::List,
+    //         extra: "".to_string(),
+    //     };
 
-        Ok(Response::new(Status::Successful, info, results))
-    }
+    //     Ok(Response::new(Status::Successful, info, results))
+    // }
 
     fn new_one(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -250,17 +249,17 @@ impl GutpPostModule {
             .get("subspace_id")
             .ok_or(anyhow!("subspace_id is required"))?
             .to_owned();
-        let extlink = params
-            .get("extlink")
-            .ok_or(anyhow!("extlink is required"))?
+        let ext_link = params
+            .get("ext_link")
+            .ok_or(anyhow!("ext_link is required"))?
             .to_owned();
-        let profession = params
-            .get("profession")
-            .ok_or(anyhow!("profession is required"))?
+        let category = params
+            .get("category")
+            .ok_or(anyhow!("category is required"))?
             .to_owned();
-        let appid = params
-            .get("appid")
-            .ok_or(anyhow!("appid is required"))?
+        let app_id = params
+            .get("app_id")
+            .ok_or(anyhow!("app_id is required"))?
             .to_owned();
         let is_public = params
             .get("is_public")
@@ -285,20 +284,19 @@ impl GutpPostModule {
             author_id,
             author_nickname,
             subspace_id,
-            extlink,
-            profession,
-            appid,
+            ext_link,
+            category,
+            app_id,
+            parent_post_id: "".to_string(),
             is_public,
             status: GutpPostStatus::Normal as i16,
             weight: GutpPostWeight::Normal as i16,
             created_time: time,
             updated_time: time,
-            create_time_on_chain: time,
-            update_time_on_chain: time,
         };
 
         let (sql_statement, sql_params) = post.build_insert();
-        _ = pg::execute(&pg_addr, &sql_statement, &sql_params)?;
+        _ = pg_conn.execute(&sql_statement, &sql_params)?;
 
         let results: Vec<GutpPost> = vec![post];
 
@@ -313,6 +311,7 @@ impl GutpPostModule {
 
     fn update(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
@@ -329,9 +328,9 @@ impl GutpPostModule {
             .get("author_id")
             .ok_or(anyhow!("author_id is required"))?
             .to_owned();
-        let extlink = params
-            .get("extlink")
-            .ok_or(anyhow!("extlink is required"))?
+        let ext_link = params
+            .get("ext_link")
+            .ok_or(anyhow!("ext_link is required"))?
             .to_owned();
         let is_public = params
             .get("is_public")
@@ -344,7 +343,7 @@ impl GutpPostModule {
             .parse::<i64>()?;
         // get the item from db, check whether obj in db
         let (sql, sql_params) = GutpPost::build_get_by_id(id.as_str());
-        let rowset = pg::query(&pg_addr, &sql, &sql_params)?;
+        let rowset = pg_conn.query(&sql, &sql_params)?;
         match rowset.rows.into_iter().next() {
             Some(row) => {
                 let old_post = GutpPost::from_row(row);
@@ -353,15 +352,14 @@ impl GutpPostModule {
                     title,
                     content,
                     author_id,
-                    extlink,
+                    ext_link,
                     is_public,
                     updated_time: time,
-                    update_time_on_chain: time,
                     ..old_post
                 };
 
                 let (sql, sql_params) = post.build_update();
-                _ = pg::execute(&pg_addr, &sql, &sql_params)?;
+                _ = pg_conn.execute(&sql, &sql_params)?;
 
                 let results: Vec<GutpPost> = vec![post];
 
@@ -381,13 +379,14 @@ impl GutpPostModule {
 
     fn delete(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
+        let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("id is required"))?;
 
         let (sql, sql_params) = GutpPost::build_delete(id.as_str());
-        _ = pg::execute(&pg_addr, &sql, &sql_params)?;
+        _ = pg_conn.execute(&sql, &sql_params)?;
 
         let info = Info {
             model_name: GutpPost::model_name(),
@@ -402,15 +401,15 @@ impl GutpPostModule {
 
 impl Module for GutpPostModule {
     fn router(&self, router: &mut Router) -> Result<()> {
-        router.get("/v1/post", Self::get_one);
-        router.get("/v1/post/list", Self::get_list);
-        router.get("/v1/post/list_by_subspace", Self::list_by_subspace);
-        router.get("/v1/post/list_by_author", Self::list_by_author);
-        router.get("/v1/post/list_by_profession", Self::list_by_profession);
-        router.get("/v1/post/list_by_appid", Self::list_by_appid);
-        router.post("/v1/post/create", Self::new_one);
-        router.post("/v1/post/update", Self::update);
-        router.post("/v1/post/delete", Self::delete);
+        router.get("/gutp/v1/post", Self::get_one);
+        router.get("/gutp/v1/post/list", Self::get_list);
+        router.get("/gutp/v1/post/list_by_subspace", Self::list_by_subspace);
+        router.get("/gutp/v1/post/list_by_author", Self::list_by_author);
+        // router.get("/gutp/v1/post/list_by_profession", Self::list_by_profession);
+        // router.get("/gutp/v1/post/list_by_appid", Self::list_by_appid);
+        router.post("/gutp/v1/post/create", Self::new_one);
+        router.post("/gutp/v1/post/update", Self::update);
+        router.post("/gutp/v1/post/delete", Self::delete);
 
         Ok(())
     }

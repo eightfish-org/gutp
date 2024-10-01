@@ -1,5 +1,5 @@
-use eightfish::EightFishModel;
 use eightfish_derive::EightFishModel;
+use eightfish_sdk::EightFishModel;
 use serde::{Deserialize, Serialize};
 use spin_sdk::pg::{DbValue, Decode, ParameterValue};
 
@@ -12,29 +12,23 @@ pub struct GutpUser {
     pub avatar: String,
     pub role: i16,
     pub status: i16,
-    pub signup_time: i64,
-    pub pub_settings: String,
-    pub ext: String,
-    pub create_time_on_chain: i64,
-    pub update_time_on_chain: i64,
+    pub created_time: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
 pub struct GutpSubspace {
     pub id: String,
-    pub title: String,
     pub slug: String,
+    pub title: String,
     pub description: String,
     pub banner: String,
-    pub owner_id: String,
-    pub profession: String,
-    pub appid: String,
     pub is_public: bool,
     pub status: i16,
     pub weight: i16,
+    pub owner_id: String,
+    pub category: String,
+    pub app_id: String,
     pub created_time: i64,
-    pub create_time_on_chain: i64,
-    pub update_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -45,16 +39,15 @@ pub struct GutpPost {
     pub author_id: String,
     pub author_nickname: String,
     pub subspace_id: String,
-    pub extlink: String,
-    pub profession: String,
-    pub appid: String,
+    pub parent_post_id: String,
+    pub ext_link: String,
     pub is_public: bool,
     pub status: i16,
     pub weight: i16,
+    pub category: String,
+    pub app_id: String,
     pub created_time: i64,
     pub updated_time: i64,
-    pub create_time_on_chain: i64,
-    pub update_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -69,7 +62,6 @@ pub struct GutpComment {
     pub status: i16,
     pub weight: i32,
     pub created_time: i64,
-    pub create_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -77,12 +69,9 @@ pub struct GutpTag {
     pub id: String,
     pub caption: String,
     pub subspace_id: String,
-    pub creator_id: String,
-    pub is_subspace_tag: bool,
     pub is_public: bool,
     pub weight: i16,
     pub created_time: i64,
-    pub create_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -91,7 +80,6 @@ pub struct GutpPostTag {
     pub post_id: String,
     pub tag_id: String,
     pub created_time: i64,
-    pub create_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -101,19 +89,17 @@ pub struct GutpPostDiff {
     pub diff: String,
     pub version_num: i32,
     pub created_time: i64,
-    pub create_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
 pub struct GutpModerator {
     pub id: String,
     pub user_id: String,
-    pub is_subspace_moderator: bool,
     pub subspace_id: String,
+    pub is_subspace_moderator: bool,
     pub tag_id: String,
     pub permission_level: i16,
     pub created_time: i64,
-    pub create_time_on_chain: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -121,11 +107,12 @@ pub struct GutpExtobj {
     pub id: String,
     pub caption: String,
     pub content: String,
+    pub user_id: String,
     pub subspace_id: String,
     pub tag_id: String,
-    pub creator_id: String,
-    pub is_subspace_ext: bool,
+    pub post_id: String,
+    pub comment_id: String,
+    pub is_public: bool,
     pub weight: i16,
     pub created_time: i64,
-    pub create_time_on_chain: i64,
 }
