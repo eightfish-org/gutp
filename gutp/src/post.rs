@@ -98,15 +98,38 @@ impl GutpPostModule {
 
         let (limit, offset) = utils::build_page_info(&params)?;
 
-        let sql = SqlBuilder::select_from(SqlName::new(&GutpPost::model_name()).alias("p").safe())
-            .field("p.*")
-            .field("u.nickname")
-            .field("u.avatar")
+        // let sql = SqlBuilder::select_from(SqlName::new(&GutpPost::model_name()).alias("p").safe())
+        //     .field("p.*")
+        //     .field(SqlName::new("u").add(GutpPost::nickname()).safe())
+        //     .field(SqlName::new("u").add(GutpPost::avatar()).safe())
+        //     .left()
+        //     .join(SqlName::new(&GutpUser::model_name()).alias("u").safe())
+        //     .on_eq(
+        //         SqlName::new("p").add(GutpPost::author_id()).safe(),
+        //         SqlName::new("u").add(GutpPost::id()).safe()
+        //     )
+        //     .and_where_eq(
+        //         SqlName::new("p").add(GutpPost::is_public()).safe(),
+        //         true)
+        //     .order_desc(SqlName::new(GutpPost::created_time()).safe()) 
+        //     .limit(limit)
+        //     .offset(offset)
+        //     .sql()?;
+
+        let table_post = GutpPost::model_name();
+        let table_user = GutpUser::model_name();
+        let sql = SqlBuilder::select_from(table_post)
+            .field(name!(table_post, "*"))
+            .field(name!(table_user, GutpUser::nickname()))
+            .field(name!(table_user, GutpUser::avatar()))
             .left()
-            .join(SqlName::new(&GutpUser::model_name()).alias("u").safe())
-            .on_eq("p.author_id", "u.id")
-            .and_where_eq("p.is_public", true)
-            .order_desc("created_time")
+            .join(table_user)
+            .on_eq(
+                name!(table_post, GutpPost::author_id()),
+                name!(table_user, GutpUser::id())
+            )
+            .and_where_eq(name!(table_post, GutpPost::is_public()), true)
+            .order_desc(GutpPost::created_time()) 
             .limit(limit)
             .offset(offset)
             .sql()?;
