@@ -24,6 +24,16 @@ enum GutpPostWeight {
     SuperHigh = 3,
 }
 
+#[derive(EightFishDTO)]
+struct PostWithInfo {
+    #[dtocore]
+    post: GutpPost,
+    nickname: String,
+    avatar: String,
+}
+
+
+
 pub struct GutpPostModule;
 
 impl GutpPostModule {
@@ -81,6 +91,29 @@ impl GutpPostModule {
         };
 
         Ok(Response::new(Status::Successful, info, results))
+    }
+
+    fn get_post_with_info_list(req: &mut Request) -> Result<Response<PostWithInfo>> {
+        let params = req.parse_urlencoded()?;
+
+        let (limit, offset) = utils::build_page_info(&params)?;
+
+        let sql = SqlBuilder::select_from(SqlName::new(&GutpPost::model_name()).alias("p").safe())
+            .field("p.*")
+            .field("u.nickname")
+            .field("u.avatar")
+            .left()
+            .join(SqlName::new(&GutpUser::model_name()).alias("u").safe())
+            .on_eq("p.author_id", "u.id")
+            .and_where_eq("p.is_public", true)
+            .order_desc("created_time")
+            .limit(limit)
+            .offset(offset)
+            .sql()?;
+
+        let instances = sql_query!(PostWithInfo, &sql, &[]);
+
+        Ok(Response::new(Status::Successful, instances))
     }
 
     fn list_by_subspace(req: &mut Request) -> Result<Response> {
@@ -403,6 +436,8 @@ impl Module for GutpPostModule {
     fn router(&self, router: &mut Router) -> Result<()> {
         router.get("/gutp/v1/post", Self::get_one);
         router.get("/gutp/v1/post/list", Self::get_list);
+        router.get("/gutp/v1/post_with_info/list", Self::get_post_with_info_list);
+        
         router.get("/gutp/v1/post/list_by_subspace", Self::list_by_subspace);
         router.get("/gutp/v1/post/list_by_author", Self::list_by_author);
         // router.get("/gutp/v1/post/list_by_profession", Self::list_by_profession);
