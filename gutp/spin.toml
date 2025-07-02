@@ -17,7 +17,7 @@ component = "gutp"
 
 [component.gutp]
 description = "The component GUTP."
-source = "target/wasm32-wasip1/release/gutp.wasm"
+source = "../target/wasm32-wasip1/release/gutp.wasm"
 
 [component.gutp.variables]
 redis_host = "{{ redis_host }}"
