@@ -1,7 +1,7 @@
 use crate::constants::DB_URL_ENV;
 use crate::utils;
 use anyhow::{anyhow, bail};
-use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
+use eightfish_sdk::{Module, Request, Response, Result, Router};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
 
@@ -26,13 +26,7 @@ impl GutpModeratorModule {
             bail!("no this item".to_string());
         };
 
-        let info = Info {
-            model_name: GutpModerator::model_name(),
-            action: HandlerCRUD::GetOne,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn get_list(req: &mut Request) -> Result<Response> {
@@ -57,13 +51,7 @@ impl GutpModeratorModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpModerator::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn list_by_subspace(req: &mut Request) -> Result<Response> {
@@ -93,13 +81,7 @@ impl GutpModeratorModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpModerator::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn list_by_user(req: &mut Request) -> Result<Response> {
@@ -129,13 +111,7 @@ impl GutpModeratorModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpModerator::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn list_by_tag(req: &mut Request) -> Result<Response> {
@@ -144,7 +120,9 @@ impl GutpModeratorModule {
 
         let params = req.parse_urlencoded()?;
 
-        let tag_id = params.get("tag_id").ok_or(anyhow!("tag_id is required"))?;
+        let tag_id = params
+            .get("tag_id")
+            .ok_or(anyhow!("tag_id is required"))?;
         let (limit, offset) = utils::build_page_info(&params)?;
 
         let sql = SqlBuilder::select_from(&GutpModerator::model_name())
@@ -163,13 +141,7 @@ impl GutpModeratorModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpModerator::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn new_one(req: &mut Request) -> Result<Response> {
@@ -225,13 +197,7 @@ impl GutpModeratorModule {
 
         let results: Vec<GutpModerator> = vec![moderator];
 
-        let info = Info {
-            model_name: GutpModerator::model_name(),
-            action: HandlerCRUD::Create,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn update(req: &mut Request) -> Result<Response> {
@@ -288,13 +254,7 @@ impl GutpModeratorModule {
 
                 let results: Vec<GutpModerator> = vec![moderator];
 
-                let info = Info {
-                    model_name: GutpModerator::model_name(),
-                    action: HandlerCRUD::Update,
-                    extra: "".to_string(),
-                };
-
-                Ok(Response::new(Status::Successful, info, results))
+                Ok(Response::new_check(results))
             }
             None => {
                 bail!("update action: no item in db");
@@ -306,21 +266,14 @@ impl GutpModeratorModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
         let pg_conn = pg::Connection::open(&pg_addr)?;
 
-        let params = req.parse_urlencoded()?;
+        let moderator = req.parse_json_required::<GutpModerator>()?;
 
-        let id = params.get("id").ok_or(anyhow!("id is required"))?;
-
-        let (sql, sql_params) = GutpModerator::build_delete(id);
+        let (sql, sql_params) = moderator.build_delete();
         _ = pg_conn.execute(&sql, &sql_params)?;
 
-        let info = Info {
-            model_name: GutpModerator::model_name(),
-            action: HandlerCRUD::Delete,
-            extra: "".to_string(),
-        };
         let results: Vec<GutpModerator> = vec![];
 
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 }
 
@@ -328,10 +281,7 @@ impl Module for GutpModeratorModule {
     fn router(&self, router: &mut Router) -> Result<()> {
         router.get("/gutp/v1/moderator", Self::get_one);
         router.get("/gutp/v1/moderator/list", Self::get_list);
-        router.get(
-            "/gutp/v1/moderator/list_by_subspace",
-            Self::list_by_subspace,
-        );
+        router.get("/gutp/v1/moderator/list_by_subspace", Self::list_by_subspace);
         router.get("/gutp/v1/moderator/list_by_user", Self::list_by_user);
         router.get("/gutp/v1/moderator/list_by_tag", Self::list_by_tag);
         router.post("/gutp/v1/moderator/create", Self::new_one);

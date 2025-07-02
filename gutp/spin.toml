@@ -17,7 +17,7 @@ component = "gutp"
 
 [component.gutp]
 description = "The component GUTP."
-source = "target/wasm32-wasi/release/gutp.wasm"
+source = "target/wasm32-wasip1/release/gutp.wasm"
 
 [component.gutp.variables]
 redis_host = "{{ redis_host }}"
@@ -25,4 +25,4 @@ proto_id = "{{ proto_id }}"
 
 # How to build the Wasm module from source
 [component.gutp.build]
-command = "cargo build --target wasm32-wasi --release"
+command = "cargo build --target wasm32-wasip1 --release"

@@ -1,5 +1,5 @@
 use anyhow::{anyhow, bail};
-use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
+use eightfish_sdk::{Module, Request, Response, Result, Router};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
 
@@ -27,13 +27,7 @@ impl GutpTagModule {
             bail!("no this item".to_string());
         };
 
-        let info = Info {
-            model_name: GutpTag::model_name(),
-            action: HandlerCRUD::GetOne,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn get_list(req: &mut Request) -> Result<Response> {
@@ -57,13 +51,7 @@ impl GutpTagModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpTag::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn list_by_subspace(req: &mut Request) -> Result<Response> {
@@ -93,13 +81,7 @@ impl GutpTagModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpTag::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn list_by_creator(req: &mut Request) -> Result<Response> {
@@ -129,13 +111,7 @@ impl GutpTagModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpTag::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn new_one(req: &mut Request) -> Result<Response> {
@@ -182,13 +158,7 @@ impl GutpTagModule {
 
         let results: Vec<GutpTag> = vec![tag];
 
-        let info = Info {
-            model_name: GutpTag::model_name(),
-            action: HandlerCRUD::Create,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn update(req: &mut Request) -> Result<Response> {
@@ -197,18 +167,18 @@ impl GutpTagModule {
 
         let params = req.parse_urlencoded()?;
 
-        let id = params.get("id").ok_or(anyhow!("id not found"))?.to_owned();
+        let id = params.get("id").ok_or(anyhow!("id is required"))?;
         let caption = params
             .get("caption")
-            .ok_or(anyhow!("caption not found"))?
+            .ok_or(anyhow!("caption is required"))?
             .to_owned();
         let subspace_id = params
             .get("subspace_id")
-            .ok_or(anyhow!("subspace_id not found"))?
+            .ok_or(anyhow!("subspace_id is required"))?
             .to_owned();
         let is_public = params
             .get("is_public")
-            .ok_or(anyhow!("is_public not found"))?
+            .ok_or(anyhow!("is_public is required"))?
             .parse::<bool>()?;
         // let time = req
         //     .ext()
@@ -217,7 +187,7 @@ impl GutpTagModule {
         //     .parse::<i64>()?;
 
         // get the item from db, check whether obj in db
-        let (sql, sql_params) = GutpTag::build_get_by_id(&id);
+        let (sql, sql_params) = GutpTag::build_get_by_id(id);
         let rowset = pg_conn.query(&sql, &sql_params)?;
         match rowset.rows.into_iter().next() {
             Some(row) => {
@@ -235,13 +205,7 @@ impl GutpTagModule {
 
                 let results: Vec<GutpTag> = vec![tag];
 
-                let info = Info {
-                    model_name: GutpTag::model_name(),
-                    action: HandlerCRUD::Update,
-                    extra: "".to_string(),
-                };
-
-                Ok(Response::new(Status::Successful, info, results))
+                Ok(Response::new_check(results))
             }
             None => {
                 bail!("update action: no item in db");
@@ -253,21 +217,14 @@ impl GutpTagModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
         let pg_conn = pg::Connection::open(&pg_addr)?;
 
-        let params = req.parse_urlencoded()?;
+        let tag = req.parse_json_required::<GutpTag>()?;
 
-        let id = params.get("id").ok_or(anyhow!("id is required"))?;
-
-        let (sql, sql_params) = GutpTag::build_delete(id);
+        let (sql, sql_params) = tag.build_delete();
         _ = pg_conn.execute(&sql, &sql_params)?;
 
-        let info = Info {
-            model_name: GutpTag::model_name(),
-            action: HandlerCRUD::Delete,
-            extra: "".to_string(),
-        };
         let results: Vec<GutpTag> = vec![];
 
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 }
 

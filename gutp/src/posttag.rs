@@ -1,5 +1,5 @@
 use anyhow::{anyhow, bail};
-use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
+use eightfish_sdk::{Module, Request, Response, Result, Router};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
 
@@ -26,13 +26,7 @@ impl GutpPostTagModule {
             bail!("no this item".to_string())
         };
 
-        let info = Info {
-            model_name: GutpPostTag::model_name(),
-            action: HandlerCRUD::GetOne,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn get_list(req: &mut Request) -> Result<Response> {
@@ -55,13 +49,7 @@ impl GutpPostTagModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpPostTag::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn list_by_post(req: &mut Request) -> Result<Response> {
@@ -91,13 +79,7 @@ impl GutpPostTagModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpPostTag::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn list_by_tag(req: &mut Request) -> Result<Response> {
@@ -106,7 +88,10 @@ impl GutpPostTagModule {
 
         let params = req.parse_urlencoded()?;
 
-        let tag_id = params.get("tag_id").ok_or(anyhow!("tag_id is required"))?;
+        let tag_id = params
+            .get("tag_id")
+            .ok_or(anyhow!("tag_id is required"))?;
+
         let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpPostTag::model_name())
             .fields(&GutpPostTag::fields())
@@ -124,13 +109,7 @@ impl GutpPostTagModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpPostTag::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn new_one(req: &mut Request) -> Result<Response> {
@@ -172,13 +151,7 @@ impl GutpPostTagModule {
 
         let results: Vec<GutpPostTag> = vec![posttag];
 
-        let info = Info {
-            model_name: GutpPostTag::model_name(),
-            action: HandlerCRUD::Create,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn update(req: &mut Request) -> Result<Response> {
@@ -220,13 +193,7 @@ impl GutpPostTagModule {
 
                 let results: Vec<GutpPostTag> = vec![posttag];
 
-                let info = Info {
-                    model_name: GutpPostTag::model_name(),
-                    action: HandlerCRUD::Update,
-                    extra: "".to_string(),
-                };
-
-                Ok(Response::new(Status::Successful, info, results))
+                Ok(Response::new_check(results))
             }
             None => {
                 bail!("update action: no item in db");
@@ -238,21 +205,14 @@ impl GutpPostTagModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
         let pg_conn = pg::Connection::open(&pg_addr)?;
 
-        let params = req.parse_urlencoded()?;
+        let posttag = req.parse_json_required::<GutpPostTag>()?;
 
-        let id = params.get("id").ok_or(anyhow!("delete action: no id"))?;
-
-        let (sql, sql_params) = GutpPostTag::build_delete(id.as_str());
+        let (sql, sql_params) = posttag.build_delete();
         let _er = pg_conn.execute(&sql, &sql_params)?;
 
-        let info = Info {
-            model_name: GutpPostTag::model_name(),
-            action: HandlerCRUD::Delete,
-            extra: "".to_string(),
-        };
         let results: Vec<GutpPostTag> = vec![];
 
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 }
 
