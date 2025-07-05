@@ -1,4 +1,4 @@
-POST http://127.0.0.1:3000/v1/subspace/create
+POST http://127.0.0.1:3000/gutp/v1/subspace/create
 
 [FormParams]
 title: space111
