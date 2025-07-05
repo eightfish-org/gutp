@@ -1,7 +1,7 @@
 use crate::constants::DB_URL_ENV;
 use crate::utils;
 use anyhow::{anyhow, bail};
-use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
+use eightfish_sdk::{Module, Request, Response, Result, Router};
 use gutp_types::GutpPostDiff;
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
@@ -25,13 +25,7 @@ impl GutpPostDiffModule {
             bail!("no this item".to_string());
         };
 
-        let info = Info {
-            model_name: GutpPostDiff::model_name(),
-            action: HandlerCRUD::GetOne,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn get_list(req: &mut Request) -> Result<Response> {
@@ -55,13 +49,7 @@ impl GutpPostDiffModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpPostDiff::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn list_by_post(req: &mut Request) -> Result<Response> {
@@ -91,13 +79,7 @@ impl GutpPostDiffModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpPostDiff::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn new_one(req: &mut Request) -> Result<Response> {
@@ -143,13 +125,7 @@ impl GutpPostDiffModule {
 
         let results: Vec<GutpPostDiff> = vec![postdiff];
 
-        let info = Info {
-            model_name: GutpPostDiff::model_name(),
-            action: HandlerCRUD::Create,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn update(req: &mut Request) -> Result<Response> {
@@ -191,13 +167,7 @@ impl GutpPostDiffModule {
 
                 let results: Vec<GutpPostDiff> = vec![postdiff];
 
-                let info = Info {
-                    model_name: GutpPostDiff::model_name(),
-                    action: HandlerCRUD::Update,
-                    extra: "".to_string(),
-                };
-
-                Ok(Response::new(Status::Successful, info, results))
+                Ok(Response::new_check(results))
             }
             None => {
                 bail!("update action: no item in db");
@@ -209,21 +179,14 @@ impl GutpPostDiffModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
         let pg_conn = pg::Connection::open(&pg_addr)?;
 
-        let params = req.parse_urlencoded()?;
+        let postdiff = req.parse_json_required::<GutpPostDiff>()?;
 
-        let id = params.get("id").ok_or(anyhow!("id is required."))?;
-
-        let (sql, sql_params) = GutpPostDiff::build_delete(id);
+        let (sql, sql_params) = postdiff.build_delete();
         _ = pg_conn.execute(&sql, &sql_params)?;
 
-        let info = Info {
-            model_name: GutpPostDiff::model_name(),
-            action: HandlerCRUD::Delete,
-            extra: "".to_string(),
-        };
         let results: Vec<GutpPostDiff> = vec![];
 
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 }
 

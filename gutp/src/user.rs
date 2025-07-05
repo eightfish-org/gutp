@@ -1,7 +1,7 @@
 use crate::constants::DB_URL_ENV;
 use crate::utils;
 use anyhow::{anyhow, bail};
-use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
+use eightfish_sdk::{Module, Request, Response, Result, Router};
 use gutp_types::GutpUser;
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
@@ -37,13 +37,7 @@ impl GutpUserModule {
             results.push(article);
         }
 
-        let info = Info {
-            model_name: GutpUser::model_name(),
-            action: HandlerCRUD::GetOne,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn get_by_account(req: &mut Request) -> Result<Response> {
@@ -60,7 +54,7 @@ impl GutpUserModule {
         let sql = SqlBuilder::select_from(&GutpUser::model_name())
             .fields(&GutpUser::fields())
             .and_where_eq("account", "$1")
-            .order_desc("signup_time")
+            .order_desc("created_time")
             .limit(limit)
             .offset(offset)
             .sql()?;
@@ -73,13 +67,7 @@ impl GutpUserModule {
             results.push(article);
         }
 
-        let info = Info {
-            model_name: GutpUser::model_name(),
-            action: HandlerCRUD::GetOne,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn new_user(req: &mut Request) -> Result<Response> {
@@ -132,13 +120,7 @@ impl GutpUserModule {
 
         let results: Vec<GutpUser> = vec![article];
 
-        let info = Info {
-            model_name: GutpUser::model_name(),
-            action: HandlerCRUD::Create,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn update(req: &mut Request) -> Result<Response> {
@@ -185,13 +167,7 @@ impl GutpUserModule {
 
                 let results: Vec<GutpUser> = vec![user];
 
-                let info = Info {
-                    model_name: GutpUser::model_name(),
-                    action: HandlerCRUD::Update,
-                    extra: "".to_string(),
-                };
-
-                Ok(Response::new(Status::Successful, info, results))
+                Ok(Response::new_check(results))
             }
             None => {
                 bail!("update action: no item in db")
@@ -203,22 +179,14 @@ impl GutpUserModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
         let pg_conn = pg::Connection::open(&pg_addr)?;
 
-        let params = req.parse_urlencoded()?;
+        let user = req.parse_json_required::<GutpUser>()?;
 
-        let id = params.get("id").ok_or(anyhow!("id is required"))?;
-
-        let (sql, sql_params) = GutpUser::build_delete(id);
+        let (sql, sql_params) = user.build_delete();
         _ = pg_conn.execute(&sql, &sql_params);
 
         let results: Vec<GutpUser> = vec![];
 
-        let info = Info {
-            model_name: GutpUser::model_name(),
-            action: HandlerCRUD::Delete,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 }
 

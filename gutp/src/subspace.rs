@@ -1,5 +1,5 @@
 use anyhow::{anyhow, bail};
-use eightfish_sdk::{HandlerCRUD, Info, Module, Request, Response, Result, Router, Status};
+use eightfish_sdk::{Module, Request, Response, Result, Router};
 use spin_sdk::pg::{self, ParameterValue};
 use sql_builder::SqlBuilder;
 
@@ -46,13 +46,7 @@ impl GutpSubspaceModule {
         }
         // println!("in handler subspace get_one: results: {:?}", results);
 
-        let info = Info {
-            model_name: GutpSubspace::model_name(),
-            action: HandlerCRUD::GetOne,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn get_list(req: &mut Request) -> Result<Response> {
@@ -76,13 +70,7 @@ impl GutpSubspaceModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpSubspace::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn list_by_owner(req: &mut Request) -> Result<Response> {
@@ -113,13 +101,7 @@ impl GutpSubspaceModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpSubspace::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn list_by_category(req: &mut Request) -> Result<Response> {
@@ -150,22 +132,18 @@ impl GutpSubspaceModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpSubspace::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
-    fn list_by_app_id(req: &mut Request) -> Result<Response> {
+    fn list_by_appid(req: &mut Request) -> Result<Response> {
         let pg_addr = std::env::var(DB_URL_ENV)?;
         let pg_conn = pg::Connection::open(&pg_addr)?;
 
         let params = req.parse_urlencoded()?;
 
-        let app_id = params.get("app_id").ok_or(anyhow!("app_id is required"))?;
+        let app_id = params
+            .get("app_id")
+            .ok_or(anyhow!("app_id is required"))?;
 
         let (limit, offset) = utils::build_page_info(&params)?;
         let sql = SqlBuilder::select_from(&GutpSubspace::model_name())
@@ -184,13 +162,7 @@ impl GutpSubspaceModule {
             results.push(sp);
         }
 
-        let info = Info {
-            model_name: GutpSubspace::model_name(),
-            action: HandlerCRUD::List,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn new_one(req: &mut Request) -> Result<Response> {
@@ -199,61 +171,63 @@ impl GutpSubspaceModule {
 
         let params = req.parse_urlencoded()?;
 
+        let slug = params
+            .get("slug")
+            .ok_or(anyhow!("slug is required"))?
+            .to_owned();
         let title = params
             .get("title")
-            .ok_or(anyhow!("missing title"))?
+            .ok_or(anyhow!("title is required"))?
             .to_owned();
         let description = params
             .get("description")
-            .ok_or(anyhow!("missing description"))?
+            .ok_or(anyhow!("description is required"))?
             .to_owned();
         let banner = params
             .get("banner")
-            .ok_or(anyhow!("missing banner"))?
+            .ok_or(anyhow!("banner is required"))?
             .to_owned();
         let owner_id = params
             .get("owner_id")
-            .ok_or(anyhow!("missing owner_id"))?
+            .ok_or(anyhow!("owner_id is required"))?
             .to_owned();
         let category = params
             .get("category")
-            .ok_or(anyhow!("missing profession"))?
+            .ok_or(anyhow!("category is required"))?
             .to_owned();
         let app_id = params
             .get("app_id")
-            .ok_or(anyhow!("missing appid"))?
+            .ok_or(anyhow!("app_id is required"))?
             .to_owned();
         let is_public = params
             .get("is_public")
-            .ok_or(anyhow!("missing is_public"))?
+            .ok_or(anyhow!("is_public is required"))?
             .parse::<bool>()?;
-        let slug = params
-            .get("slug")
-            .ok_or(anyhow!("missing slug"))?
-            .to_owned();
+
         let id = req
             .ext()
             .get("random_str")
-            .ok_or(anyhow!("failed generate id"))?
+            .ok_or(anyhow!("random_str is required"))?
             .to_owned();
         let time = req
             .ext()
             .get("time")
-            .ok_or(anyhow!("failed get time"))?
+            .ok_or(anyhow!("time is required"))?
             .parse::<i64>()?;
+
         let subspace = GutpSubspace {
             id,
+            slug,
             title,
             description,
             banner,
-            owner_id,
-            category,
-            app_id,
             is_public,
             status: GutpSubspaceStatus::Normal as i16,
             weight: GutpSubspaceWeight::Normal as i16,
+            owner_id,
+            category,
+            app_id,
             created_time: time,
-            slug,
         };
 
         let (sql, sql_params) = subspace.build_insert();
@@ -261,13 +235,7 @@ impl GutpSubspaceModule {
 
         let results: Vec<GutpSubspace> = vec![subspace];
 
-        let info = Info {
-            model_name: GutpSubspace::model_name(),
-            action: HandlerCRUD::Create,
-            extra: "".to_string(),
-        };
-
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 
     fn update(req: &mut Request) -> Result<Response> {
@@ -335,13 +303,7 @@ impl GutpSubspaceModule {
 
                 let results: Vec<GutpSubspace> = vec![subspace];
 
-                let info = Info {
-                    model_name: GutpSubspace::model_name(),
-                    action: HandlerCRUD::Update,
-                    extra: "".to_string(),
-                };
-
-                Ok(Response::new(Status::Successful, info, results))
+                Ok(Response::new_check(results))
             }
             None => {
                 bail!("update action: no item in db");
@@ -353,21 +315,14 @@ impl GutpSubspaceModule {
         let pg_addr = std::env::var(DB_URL_ENV)?;
         let pg_conn = pg::Connection::open(&pg_addr)?;
 
-        let params = req.parse_urlencoded()?;
+        let subspace = req.parse_json_required::<GutpSubspace>()?;
 
-        let id = params.get("id").ok_or(anyhow!("missing id"))?;
-
-        let (sql_statement, sql_params) = GutpSubspace::build_delete(id);
+        let (sql_statement, sql_params) = subspace.build_delete();
         _ = pg_conn.execute(&sql_statement, &sql_params)?;
 
-        let info = Info {
-            model_name: GutpSubspace::model_name(),
-            action: HandlerCRUD::Delete,
-            extra: "".to_string(),
-        };
         let results: Vec<GutpSubspace> = vec![];
 
-        Ok(Response::new(Status::Successful, info, results))
+        Ok(Response::new_check(results))
     }
 }
 
@@ -377,7 +332,7 @@ impl Module for GutpSubspaceModule {
         router.get("/gutp/v1/subspace/list", Self::get_list);
         router.get("/gutp/v1/subspace/list_by_owner", Self::list_by_owner);
         router.get("/gutp/v1/subspace/list_by_category", Self::list_by_category);
-        router.get("/gutp/v1/subspace/list_by_app_id", Self::list_by_app_id);
+        router.get("/gutp/v1/subspace/list_by_appid", Self::list_by_appid);
         router.post("/gutp/v1/subspace/create", Self::new_one);
         router.post("/gutp/v1/subspace/update", Self::update);
         router.post("/gutp/v1/subspace/delete", Self::delete);
