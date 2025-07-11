@@ -1,145 +1,116 @@
 CREATE TABLE gutpuser (
-    id TEXT PRIMARY KEY,
-    account TEXT NOT NULL,                      -- readable name, like michael
-    oauth_source TEXT NOT NULL,                 -- from where, like github, google, facebook
-    nickname TEXT NOT NULL,                      
-    avatar TEXT NOT NULL,
-    role SMALLINT NOT NULL,                     -- role for simple permission system
-    status SMALLINT NOT NULL,                   -- current status of this account, like normal, frozen, deleted, ...
-    created_time BIGINT NOT NULL
-);
-CREATE TABLE gutpuser_idhash (
-	id TEXT PRIMARY KEY,
-	hash TEXT NOT NULL
+    id VARCHAR PRIMARY KEY,
+    account VARCHAR UNIQUE NOT NULL,  -- readable name, like `michael`
+    oauth_source VARCHAR NOT NULL,  -- from where, like github, google, facebook
+    nickname VARCHAR NOT NULL,                      
+    avatar VARCHAR NOT NULL,
+    role SMALLINT NOT NULL CHECK (role IN (0, 1, 2, 3, 4, 5)),  -- role for simple permission system
+	status SMALLINT NOT NULL CHECK (status IN (0, 1, 2)),  -- 0: inactive, 1: active, 2: frozen
+    created_time BIGINT NOT NULL,
+	data_source VARCHAR NOT NULL
 );
 
 CREATE TABLE gutpsubspace (
-    id TEXT PRIMARY KEY,
-    slug TEXT NOT NULL,                         -- slug readable name of this subspace within an url
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    banner TEXT NOT NULL,
-    is_public BOOLEAN NOT NULL,                 -- is this subspace a public square, all data in this subspace is plaintext
+    id VARCHAR PRIMARY KEY,
+    slug VARCHAR NOT NULL,                         -- slug: readable name of this subspace in an url
+    title VARCHAR NOT NULL,
+    description VARCHAR NOT NULL,
+    banner VARCHAR NOT NULL,
+    is_public BOOLEAN NOT NULL DEFAULT TRUE,   -- is this subspace a public square, all data in this subspace is plaintext
     status SMALLINT NOT NULL,                   -- normal, forzen, blacklist, deleted ...
     weight SMALLINT NOT NULL,                   -- weight of this subspace, used for ranking and recommendation
-    owner_id TEXT NOT NULL,                     -- is this subspace a personal blog space, owner_id is the person's id
-    category TEXT NOT NULL,                     -- the category of this subspace 
-    app_id TEXT NOT NULL,                       -- multiple app's can be connected to the same gutp instance, so use app_id to distinguish
-    created_time BIGINT NOT NULL
-);
-CREATE TABLE gutpsubspace_idhash (
-	id TEXT PRIMARY KEY,
-	hash TEXT NOT NULL
+    owner_id VARCHAR REFERENCES gutpuser(id) ON DELETE RESTRICT,   -- Tracks the owner
+    created_time BIGINT NOT NULL,
+	data_source VARCHAR NOT NULL
 );
 
 CREATE TABLE gutppost (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
+    id VARCHAR PRIMARY KEY,
+    title VARCHAR NOT NULL,
     content TEXT NOT NULL,
-    author_id TEXT NOT NULL,
-    author_nickname TEXT NOT NULL,              -- for convinence, no need to do join operation when show info of this post
-    subspace_id TEXT NOT NULL,                  -- belongs to which subspace
-    parent_post_id TEXT NOT NULL,               -- used to construct a post tree
-    ext_link TEXT NOT NULL,                      -- for link aggregator-like application
-    is_public BOOLEAN NOT NULL,                 -- if public, the content of this post will be stored in plaintext, otherwise encrypted
-    status SMALLINT NOT NULL,
+    author_id VARCHAR NOT NULL REFERENCES gutpuser(id) ON DELETE RESTRICT,  -- Tracks the author,
+    subspace_id VARCHAR NOT NULL REFERENCES gutpsubspace(id) ON DELETE RESTRICT,  -- Tracks the subspace
+    parent_post_id VARCHAR REFERENCES gutppost(id) ON DELETE RESTRICT,  -- used to construct a post tree
+    ext_link VARCHAR NOT NULL,                      -- for link aggregator-like application
+    is_public BOOLEAN NOT NULL DEFAULT TRUE,                 -- if public, the content of this post will be stored in plaintext, otherwise encrypted
+    status SMALLINT NOT NULL CHECK (status IN (0, 1, 2, 3, 4, 5, 6, 7)),
     weight SMALLINT NOT NULL,                   -- used for ranking and recommendation
-    category TEXT NOT NULL,                     -- the same meaning with the one of subspace, used to retreive quickly 
-    app_id TEXT NOT NULL,                       -- which app's post
     created_time BIGINT NOT NULL,
-    updated_time BIGINT NOT NULL                -- the last time timestamp of updating
-);
-CREATE TABLE gutppost_idhash (
-	id TEXT PRIMARY KEY,
-	hash TEXT NOT NULL
+    updated_time BIGINT NOT NULL,                -- the last time timestamp of updating
+	data_source VARCHAR NOT NULL
 );
 
 CREATE TABLE gutpcomment (
-    id TEXT PRIMARY KEY,
-    content TEXT NOT NULL,
-    author_id TEXT NOT NULL,
-    author_nickname TEXT NOT NULL,
-    post_id TEXT NOT NULL,                      -- which post it belongs to
-    parent_comment_id TEXT NOT NULL,            -- used to construct a comment tree
-    is_public BOOLEAN NOT NULL,
-    status SMALLINT NOT NULL,
+    id VARCHAR PRIMARY KEY,
+    content VARCHAR NOT NULL,
+    author_id VARCHAR NOT NULL REFERENCES gutpuser(id) ON DELETE RESTRICT,   -- Tracks the author,
+    post_id VARCHAR NOT NULL REFERENCES gutppost(id) ON DELETE RESTRICT,
+    parent_comment_id VARCHAR REFERENCES gutpcomment(id) ON DELETE RESTRICT,            -- used to construct a comment tree
+    is_public BOOLEAN NOT NULL DEFAULT TRUE,
+    status SMALLINT NOT NULL CHECK (status IN (0, 1, 2, 3, 4, 5, 6, 7)),
     weight INTEGER NOT NULL,
-    created_time BIGINT NOT NULL
-);
-CREATE TABLE gutpcomment_idhash (
-	id TEXT PRIMARY KEY,
-	hash TEXT NOT NULL
+    created_time BIGINT NOT NULL,
+	data_source VARCHAR NOT NULL
 );
 
 -- a tag always belongs to certain subspace
 CREATE TABLE gutptag (
-    id TEXT PRIMARY KEY,
-    caption TEXT NOT NULL,
-    subspace_id TEXT NOT NULL,                  -- which subspace this tag belongs to
-    is_public BOOLEAN NOT NULL,                 -- is this tag a public (plaintext) tag
+    id VARCHAR PRIMARY KEY,
+    caption VARCHAR NOT NULL,
+    subspace_id VARCHAR NOT NULL REFERENCES gutpsubspace(id) ON DELETE RESTRICT,
+    is_public BOOLEAN NOT NULL DEFAULT TRUE,  -- is this tag a public (plaintext) tag
     weight SMALLINT NOT NULL,
-    created_time BIGINT NOT NULL
+    created_time BIGINT NOT NULL,
+	data_source VARCHAR NOT NULL
 );
-CREATE TABLE gutptag_idhash (
-	id TEXT PRIMARY KEY,
-	hash TEXT NOT NULL
+
+-- M:N relation table between subspace and tag
+CREATE TABLE gutpsubspacetag (
+    id VARCHAR PRIMARY KEY,
+    subspace_id VARCHAR NOT NULL REFERENCES gutpsubspace(id) ON DELETE RESTRICT,
+    tag_id VARCHAR NOT NULL REFERENCES gutptag(id) ON DELETE RESTRICT,
+    created_time BIGINT NOT NULL
 );
 
 -- M:N relation table between post and tag
 CREATE TABLE gutpposttag (
-    id TEXT PRIMARY KEY,
-    post_id TEXT NOT NULL,
-    tag_id TEXT NOT NULL,
+    id VARCHAR PRIMARY KEY,
+    post_id VARCHAR NOT NULL REFERENCES gutppost(id) ON DELETE RESTRICT,
+    tag_id VARCHAR NOT NULL REFERENCES gutptag(id) ON DELETE RESTRICT,
     created_time BIGINT NOT NULL
-);
-CREATE TABLE gutpposttag_idhash (
-	id TEXT PRIMARY KEY,
-	hash TEXT NOT NULL
 );
 
 -- for history version control
 CREATE TABLE gutppostdiff (
-    id TEXT PRIMARY KEY,
-    post_id TEXT NOT NULL,                            -- which post's diff
+    id VARCHAR PRIMARY KEY,
+    post_id VARCHAR NOT NULL REFERENCES gutppost(id) ON DELETE RESTRICT,
     diff TEXT NOT NULL,                               -- diff bewteen old version and new version
     version_num INTEGER NOT NULL,                     -- will increase 1 by every modification
     created_time BIGINT NOT NULL
 );
-CREATE TABLE gutppostdiff_idhash (
-	id TEXT PRIMARY KEY,
-	hash TEXT NOT NULL
-);
 
 -- subspace admins
 CREATE TABLE gutpmoderator (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    subspace_id TEXT NOT NULL,                        -- which subspace this moderator belongs to
-    is_subspace_moderator BOOLEAN NOT NULL,           -- is it a subspace-scoped moderator
-    tag_id TEXT,                                      -- or it is a tag-scoped moderator, bound to the tag
-    permission_level SMALLINT NOT NULL,               -- a simple mechanism for permission control
+    id VARCHAR PRIMARY KEY,
+    user_id VARCHAR NOT NULL REFERENCES gutpuser(id) ON DELETE RESTRICT,
+    subspace_id VARCHAR NOT NULL REFERENCES gutpsubspace(id) ON DELETE RESTRICT,
+    is_subspace_moderator BOOLEAN NOT NULL DEFAULT TRUE,  -- is it a subspace-scoped moderator
+    perm_level SMALLINT NOT NULL,  -- a simple mechanism for permission control
+    tag_id VARCHAR REFERENCES gutptag(id) ON DELETE RESTRICT,
     created_time BIGINT NOT NULL
-);
-CREATE TABLE gutpmoderator_idhash (
-	id TEXT PRIMARY KEY,
-	hash TEXT NOT NULL
 );
 
 -- an unified extension object for all levels
 CREATE TABLE gutpextobj (
-    id TEXT PRIMARY KEY,
-    caption TEXT NOT NULL,
-    content TEXT NOT NULL,                            -- may be a json 
-	user_id TEXT NOT NULL,                            -- if has value, it is an extension obj to this user
-    subspace_id TEXT NOT NULL,                        -- if has value, it is an extension obj to this subspace
-    tag_id TEXT NOT NULL,                             -- if has value, it is an extension obj to this tag
-    post_id TEXT NOT NULL,                            -- if has value, it is an extension obj to this post
-    comment_id TEXT NOT NULL,                         -- if has value, it is an extension obj to this comment
-    is_public BOOLEAN NOT NULL,                       -- is it's data public/plaintext
-    weight SMALLINT NOT NULL,                         -- for ranking
+    id VARCHAR PRIMARY KEY,
+    caption VARCHAR NOT NULL,
+    content VARCHAR NOT NULL,  -- may be a json 
+    user_id VARCHAR REFERENCES gutpuser(id) ON DELETE RESTRICT,
+    subspace_id VARCHAR REFERENCES gutpsubspace(id) ON DELETE RESTRICT,
+    tag_id VARCHAR REFERENCES gutptag(id) ON DELETE RESTRICT,
+    post_id VARCHAR REFERENCES gutppost(id) ON DELETE RESTRICT,
+    comment_id VARCHAR REFERENCES gutpcomment(id) ON DELETE RESTRICT,
+    is_public BOOLEAN NOT NULL DEFAULT TRUE,  -- is it's data public/plaintext
+    weight SMALLINT NOT NULL,  -- for ranking
     created_time BIGINT NOT NULL
-);
-CREATE TABLE gutpextobj_idhash (
-	id TEXT PRIMARY KEY,
-	hash TEXT NOT NULL
 );
