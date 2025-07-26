@@ -16,6 +16,21 @@ pub struct GutpUser {
     pub data_source: String,  // VARCHAR NOT NULL
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum GutpUserStatus {
+    #[default]
+    Normal = 0,
+    Frozen = 1,
+    Forbidden = 2,
+    Deleted = 3,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum GutpUserRole {
+    #[default]
+    Normal = 0,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
 pub struct GutpSubspace {
     pub id: String,               // VARCHAR PRIMARY KEY
@@ -29,6 +44,27 @@ pub struct GutpSubspace {
     pub owner_id: Option<String>, // VARCHAR REFERENCES gutpuser(id), nullable
     pub created_time: i64,        // BIGINT NOT NULL
     pub data_source: String,      // VARCHAR NOT NULL
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum GutpSubspaceStatus {
+    #[default]
+    Normal = 0,
+    Frozen = 1,
+    Forbidden = 2,
+    Deleted = 3,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum GutpSubspaceWeight {
+    #[default]
+    Normal = 0,
+    Low = -1,
+    VeryLow = -2,
+    SuperLow = -3,
+    High = 1,
+    VeryHigh = 2,
+    SuperHigh = 3,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
@@ -48,6 +84,27 @@ pub struct GutpPost {
     pub data_source: String, // VARCHAR NOT NULL
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum GutpPostStatus {
+    #[default]
+    Normal = 0,
+    Frozen = 1,
+    Forbidden = 2,
+    Deleted = 3,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum GutpPostWeight {
+    #[default]
+    Normal = 0,
+    Low = -1,
+    VeryLow = -2,
+    SuperLow = -3,
+    High = 1,
+    VeryHigh = 2,
+    SuperHigh = 3,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
 pub struct GutpComment {
     pub id: String,                        // VARCHAR PRIMARY KEY
@@ -60,6 +117,21 @@ pub struct GutpComment {
     pub weight: i32, // INTEGER NOT NULL
     pub created_time: i64, // BIGINT NOT NULL
     pub data_source: String, // VARCHAR NOT NULL
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum GutpCommentStatus {
+    #[default]
+    Normal = 0,
+    Frozen = 1,
+    Forbidden = 2,
+    Deleted = 3,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum GutpCommentWeight {
+    #[default]
+    Normal = 0,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]

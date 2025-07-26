@@ -1,74 +1,53 @@
-use crate::constants::DB_URL_ENV;
-use crate::utils;
+use crate::constants::{DB_URL, REDIS_URL};
+use crate::{subspace, utils};
 use anyhow::{anyhow, bail};
-use eightfish_sdk::{Module, Request, Response, Result, Router};
-use spin_sdk::pg::{self, ParameterValue};
+use eightfish_sdk::{EightFishModel, Module, Request, Response, Result, Router, StatusCode};
+use gutp_types::{
+    GutpComment, GutpCommentStatus, GutpCommentWeight, GutpPost, GutpPostStatus, GutpPostWeight,
+    GutpSubspace, GutpSubspaceStatus, GutpSubspaceWeight, GutpUser, GutpUserRole, GutpUserStatus,
+};
+use serde_json::json;
+use spin_sdk::pg::ParameterValue;
+use spin_worker::{
+    sql_create_one, sql_delete, sql_delete_one, sql_query, sql_query_one, sql_update,
+    sql_update_one,
+};
 use sql_builder::SqlBuilder;
-
-use gutp_types::GutpComment;
-
-enum GutpCommentStatus {
-    Normal = 0,
-    Frozen = 1,
-    Forbidden = 2,
-    Deleted = 3,
-}
-
-enum GutpCommentWeight {
-    Normal = 0,
-}
 
 pub struct GutpCommentModule;
 
 impl GutpCommentModule {
     fn get_one(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
         let params = req.parse_urlencoded()?;
-        let comment_id = params.get("id").ok_or(anyhow!("id required."))?;
-        //let comment_id = utils::get_required_param(&params, "id")?;
-        let (sql_statement, sql_params) = GutpComment::build_get_by_id(comment_id);
-        let rowset = pg_conn.query(&sql_statement, &sql_params)?;
+        let id = params.get("id").ok_or(anyhow!("id required."))?;
 
-        let results = if let Some(row) = rowset.rows.into_iter().next() {
-            vec![GutpComment::from_row(row)]
-        } else {
-            bail!("no this item".to_string());
-        };
-
-        Ok(Response::new_check(results))
+        let item = sql_query_one!(GutpComment, &id);
+        match item {
+            Some(item) => Ok(Response::new_check(vec![item])),
+            None => {
+                bail!("error when get: no this item in db");
+            }
+        }
     }
 
     fn get_list(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
         let params = req.parse_urlencoded()?;
-
         let (limit, offset) = utils::build_page_info(&params)?;
 
         let sql = SqlBuilder::select_from(&GutpComment::model_name())
             .fields(&GutpComment::fields())
-            .order_desc("created_time")
+            .order_desc(GutpComment::created_time())
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let rowset = pg_conn.query(&sql, &[])?;
 
-        let mut results: Vec<GutpComment> = vec![];
-        for row in rowset.rows {
-            let sp = GutpComment::from_row(row);
-            results.push(sp);
-        }
+        let sql_params: Vec<ParameterValue> = vec![];
+        let results = sql_query!(GutpComment, &sql, &sql_params);
 
         Ok(Response::new_check(results))
     }
 
     fn list_by_post(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
         let params = req.parse_urlencoded()?;
 
         let post_id = params
@@ -78,27 +57,18 @@ impl GutpCommentModule {
 
         let sql = SqlBuilder::select_from(&GutpComment::model_name())
             .fields(&GutpComment::fields())
-            .and_where_eq("post_id", "$1")
-            .order_desc("created_time")
+            .and_where_eq(GutpComment::post_id(), "$1")
+            .order_desc(GutpComment::created_time())
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(post_id.clone());
-        let rowset = pg_conn.query(&sql, &[sql_param])?;
-
-        let mut results: Vec<GutpComment> = vec![];
-        for row in rowset.rows {
-            let sp = GutpComment::from_row(row);
-            results.push(sp);
-        }
+        let sql_params = vec![ParameterValue::Str(post_id.clone())];
+        let results = sql_query!(GutpComment, &sql, &sql_params);
 
         Ok(Response::new_check(results))
     }
 
     fn list_by_author(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
         let params = req.parse_urlencoded()?;
 
         let author_id = params
@@ -108,27 +78,18 @@ impl GutpCommentModule {
 
         let sql = SqlBuilder::select_from(&GutpComment::model_name())
             .fields(&GutpComment::fields())
-            .and_where_eq("author_id", "$1")
-            .order_desc("created_time")
+            .and_where_eq(GutpComment::author_id(), "$1")
+            .order_desc(GutpComment::created_time())
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(author_id.clone());
-        let rowset = pg_conn.query(&sql, &[sql_param])?;
-
-        let mut results: Vec<GutpComment> = vec![];
-        for row in rowset.rows {
-            let sp = GutpComment::from_row(row);
-            results.push(sp);
-        }
+        let sql_params = vec![ParameterValue::Str(author_id.clone())];
+        let results = sql_query!(GutpComment, &sql, &sql_params);
 
         Ok(Response::new_check(results))
     }
 
     fn new_one(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
         let params = req.parse_urlencoded()?;
 
         let content = params
@@ -139,22 +100,16 @@ impl GutpCommentModule {
             .get("author_id")
             .ok_or(anyhow!("author_id is required."))?
             .to_owned();
-        let author_nickname = params
-            .get("author_nickname")
-            .ok_or(anyhow!("author_nickname is required."))?
-            .to_owned();
         let post_id = params
             .get("post_id")
             .ok_or(anyhow!("post_id required."))?
-            .to_owned();
-        let parent_comment_id = params
-            .get("parent_comment_id")
-            .ok_or(anyhow!("parent_comment_id is required."))?
             .to_owned();
         let is_public = params
             .get("is_public")
             .ok_or(anyhow!("is_public is required."))?
             .parse::<bool>()?;
+        let parent_comment_id: Option<String> =
+            params.get("parent_comment_id").map(|s| s.to_owned());
 
         let id = req
             .ext()
@@ -171,28 +126,28 @@ impl GutpCommentModule {
             id,
             content,
             author_id,
-            author_nickname,
             post_id,
             parent_comment_id,
             is_public,
             status: GutpCommentStatus::Normal as i16,
             weight: GutpCommentWeight::Normal as i32,
             created_time: time,
+            data_source: "".to_string(),
         };
 
-        // construct a sql statement and param
-        let (sql, sql_params) = comment.build_insert();
-        _ = pg_conn.execute(&sql, &sql_params)?;
-
-        let results: Vec<GutpComment> = vec![comment];
-
-        Ok(Response::new_check(results))
+        match sql_create_one!(req, comment) {
+            Ok(item) => Ok(Response::new_check(vec![item])),
+            Err(_) => {
+                let json_result = json!({
+                    "status": "failed",
+                    "info": "Error when creating a new comment",
+                });
+                Ok(Response::new_uncheck(StatusCode::BAD_REQUEST, json_result))
+            }
+        }
     }
 
     fn update(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("id is required."))?;
@@ -200,74 +155,49 @@ impl GutpCommentModule {
             .get("content")
             .ok_or(anyhow!("content is required."))?
             .to_owned();
-        let author_id = params
-            .get("author_id")
-            .ok_or(anyhow!("author_id is required."))?
-            .to_owned();
-        let author_nickname = params
-            .get("author_nickname")
-            .ok_or(anyhow!("author_nickname is required."))?
-            .to_owned();
-        let post_id = params
-            .get("post_id")
-            .ok_or(anyhow!("post_id is required."))?
-            .to_owned();
-        let parent_comment_id = params
-            .get("parent_comment_id")
-            .ok_or(anyhow!("parent_comment_id is required."))?
-            .to_owned();
         let is_public = params
             .get("is_public")
             .ok_or(anyhow!("is_public is required."))?
             .parse::<bool>()?;
-        // let time = req
-        //     .ext()
-        //     .get("time")
-        //     .ok_or(anyhow!("generate time failed"))?
-        //     .parse::<i64>()?;
 
-        // get the item from db, check whether obj in db
-        let (sql, sql_params) = GutpComment::build_get_by_id(id);
-        let rowset = pg_conn.query(&sql, &sql_params)?;
-        match rowset.rows.into_iter().next() {
-            Some(row) => {
-                let old_comment = GutpComment::from_row(row);
-
+        let item = sql_query_one!(GutpComment, &id);
+        match item {
+            Some(old_comment) => {
                 let comment = GutpComment {
                     content,
-                    author_id,
-                    author_nickname,
-                    post_id,
-                    parent_comment_id,
                     is_public,
                     ..old_comment
                 };
 
-                let (sql, sql_params) = comment.build_update();
-                _ = pg_conn.execute(&sql, &sql_params)?;
-
-                let results: Vec<GutpComment> = vec![comment];
-
-                Ok(Response::new_check(results))
+                match sql_update_one!(req, comment) {
+                    Ok(item) => Ok(Response::new_check(vec![item])),
+                    Err(_) => {
+                        bail!("update error: db operation error")
+                    }
+                }
             }
             None => {
-                bail!("update action: no item in db");
+                bail!("update error: no this item in db");
             }
         }
     }
 
     fn delete(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
+        let params = req.parse_urlencoded()?;
+        let id = params.get("id").ok_or(anyhow!("id is required"))?;
 
-        let comment = req.parse_json_required::<GutpComment>()?;
-
-        let (sql, sql_params) = comment.build_delete();
-        let _er = pg_conn.execute(&sql, &sql_params)?;
-
-        let results: Vec<GutpComment> = vec![];
-
-        Ok(Response::new_check(results))
+        let item = sql_query_one!(GutpComment, &id);
+        match item {
+            Some(item) => match sql_delete_one!(req, item) {
+                Ok(item) => Ok(Response::new_check(vec![item])),
+                Err(_) => {
+                    bail!("delete error: db operation error")
+                }
+            },
+            None => {
+                bail!("delete error: no this item in db");
+            }
+        }
     }
 }
 
@@ -278,8 +208,8 @@ impl Module for GutpCommentModule {
         router.get("/gutp/v1/comment/list_by_post", Self::list_by_post);
         router.get("/gutp/v1/comment/list_by_author", Self::list_by_author);
         router.post("/gutp/v1/comment/create", Self::new_one);
-        router.post("/gutp/v1/comment/update", Self::update);
-        router.post("/gutp/v1/comment/delete", Self::delete);
+        router.put("/gutp/v1/comment/update", Self::update);
+        router.delete("/gutp/v1/comment/delete", Self::delete);
 
         Ok(())
     }

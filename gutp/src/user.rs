@@ -1,49 +1,38 @@
-use crate::constants::DB_URL_ENV;
+use crate::constants::{DB_URL, REDIS_URL};
 use crate::utils;
 use anyhow::{anyhow, bail};
-use eightfish_sdk::{Module, Request, Response, Result, Router};
-use gutp_types::GutpUser;
-use spin_sdk::pg::{self, ParameterValue};
+use eightfish_sdk::{EightFishModel, Module, Request, Response, Result, Router, StatusCode};
+use gutp_types::{GutpUser, GutpUserRole, GutpUserStatus};
+use serde_json::json;
+use spin_sdk::pg::ParameterValue;
+use spin_worker::{
+    sql_create_one, sql_delete, sql_delete_one, sql_query, sql_query_one, sql_update,
+    sql_update_one,
+};
 use sql_builder::SqlBuilder;
-
-enum GutpUserStatus {
-    Normal = 0,
-    Frozen = 1,
-    Forbidden = 2,
-    Deleted = 3,
-}
-
-enum GutpUserRole {
-    Normal = 0,
-}
 
 pub struct GutpUserModule;
 
 impl GutpUserModule {
     fn get_one(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
         let params = req.parse_urlencoded()?;
 
         let entity_id = params.get("id").ok_or(anyhow!("id is required"))?;
 
-        let (sql, sql_params) = GutpUser::build_get_by_id(entity_id);
-        let rowset = pg_conn.query(&sql, &sql_params)?;
+        let user = sql_query_one!(GutpUser, &entity_id);
+        match user {
+            Some(user) => {
+                let results: Vec<GutpUser> = vec![user];
 
-        let mut results: Vec<GutpUser> = vec![];
-        for row in rowset.rows {
-            let article = GutpUser::from_row(row);
-            results.push(article);
+                Ok(Response::new_check(results))
+            }
+            None => {
+                bail!("get user: no user in db");
+            }
         }
-
-        Ok(Response::new_check(results))
     }
 
     fn get_by_account(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
         let params = req.parse_urlencoded()?;
 
         let account = params
@@ -58,22 +47,13 @@ impl GutpUserModule {
             .limit(limit)
             .offset(offset)
             .sql()?;
-        let sql_param = ParameterValue::Str(account.clone());
-        let rowset = pg_conn.query(&sql, &[sql_param])?;
+        let sql_params = vec![ParameterValue::Str(account.clone())];
+        let users = sql_query!(GutpUser, &sql, &sql_params);
 
-        let mut results: Vec<GutpUser> = vec![];
-        for row in rowset.rows {
-            let article = GutpUser::from_row(row);
-            results.push(article);
-        }
-
-        Ok(Response::new_check(results))
+        Ok(Response::new_check(users))
     }
 
     fn new_user(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
         let params = req.parse_urlencoded()?;
 
         let account = params
@@ -104,7 +84,7 @@ impl GutpUserModule {
             .ok_or(anyhow!("time is required"))?
             .parse::<i64>()?;
 
-        let article = GutpUser {
+        let user = GutpUser {
             id,
             account,
             oauth_source,
@@ -113,20 +93,26 @@ impl GutpUserModule {
             role: GutpUserRole::Normal as i16,
             status: GutpUserStatus::Normal as i16,
             created_time: time,
+            data_source: "".to_string(),
         };
 
-        let (sql, sql_params) = article.build_insert();
-        _ = pg_conn.execute(&sql, &sql_params);
+        match sql_create_one!(req, user) {
+            Ok(user) => {
+                let results: Vec<GutpUser> = vec![user];
 
-        let results: Vec<GutpUser> = vec![article];
-
-        Ok(Response::new_check(results))
+                Ok(Response::new_check(results))
+            }
+            Err(_) => {
+                let json_result = json!({
+                    "status": "failed",
+                    "info": "Error when creating a new user",
+                });
+                Ok(Response::new_uncheck(StatusCode::BAD_REQUEST, json_result))
+            }
+        }
     }
 
     fn update(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
-
         let params = req.parse_urlencoded()?;
 
         let id = params.get("id").ok_or(anyhow!("id is required"))?;
@@ -147,14 +133,10 @@ impl GutpUserModule {
             .ok_or(anyhow!("avatar is required"))?
             .to_owned();
 
-        // get the item from db, check whether obj in db
-        let (sql, sql_params) = GutpUser::build_get_by_id(id);
-        let rowset = pg_conn.query(&sql, &sql_params)?;
-        match rowset.rows.into_iter().next() {
-            Some(row) => {
-                let old_user = GutpUser::from_row(row);
-
-                let user: GutpUser = GutpUser {
+        let user = sql_query_one!(GutpUser, &id);
+        match user {
+            Some(old_user) => {
+                let new_user: GutpUser = GutpUser {
                     account,
                     oauth_source,
                     nickname,
@@ -162,31 +144,35 @@ impl GutpUserModule {
                     ..old_user
                 };
 
-                let (sql, sql_params) = user.build_update();
-                _ = pg_conn.execute(&sql, &sql_params)?;
-
-                let results: Vec<GutpUser> = vec![user];
-
-                Ok(Response::new_check(results))
+                match sql_update_one!(req, new_user) {
+                    Ok(user) => Ok(Response::new_check(vec![user])),
+                    Err(_) => {
+                        bail!("update user info error: db operation error")
+                    }
+                }
             }
             None => {
-                bail!("update action: no item in db")
+                bail!("update user info error: no user in db");
             }
         }
     }
 
     fn delete(req: &mut Request) -> Result<Response> {
-        let pg_addr = std::env::var(DB_URL_ENV)?;
-        let pg_conn = pg::Connection::open(&pg_addr)?;
+        let params = req.parse_urlencoded()?;
+        let id = params.get("id").ok_or(anyhow!("id is required"))?;
 
-        let user = req.parse_json_required::<GutpUser>()?;
-
-        let (sql, sql_params) = user.build_delete();
-        _ = pg_conn.execute(&sql, &sql_params);
-
-        let results: Vec<GutpUser> = vec![];
-
-        Ok(Response::new_check(results))
+        let user = sql_query_one!(GutpUser, &id);
+        match user {
+            Some(user) => match sql_delete_one!(req, user) {
+                Ok(user) => Ok(Response::new_check(vec![user])),
+                Err(_) => {
+                    bail!("delete user error: db operation error")
+                }
+            },
+            None => {
+                bail!("delete user error: no user in db");
+            }
+        }
     }
 }
 
@@ -195,8 +181,8 @@ impl Module for GutpUserModule {
         router.get("/gutp/v1/user", Self::get_one);
         router.get("/gutp/v1/user/get_by_account", Self::get_by_account);
         router.post("/gutp/v1/user/create", Self::new_user);
-        router.post("/gutp/v1/user/update", Self::update);
-        router.post("/gutp/v1/user/delete", Self::delete);
+        router.put("/gutp/v1/user/update", Self::update);
+        router.delete("/gutp/v1/user/delete", Self::delete);
 
         Ok(())
     }
