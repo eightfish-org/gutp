@@ -104,8 +104,8 @@ impl GutpSubspaceModule {
             .to_owned();
         let time = req
             .ext()
-            .get("time")
-            .ok_or(anyhow!("time is required"))?
+            .get("timestamp")
+            .ok_or(anyhow!("timestamp is required"))?
             .parse::<i64>()?;
 
         let subspace = GutpSubspace {
@@ -161,11 +161,6 @@ impl GutpSubspaceModule {
             .get("is_public")
             .ok_or(anyhow!("is_public is required"))?
             .parse::<bool>()?;
-        // let time = req
-        //     .ext()
-        //     .get("time")
-        //     .ok_or(anyhow!("time is required"))?
-        //     .parse::<i64>()?;
 
         let sp = sql_query_one!(GutpSubspace, &id);
         match sp {

@@ -118,8 +118,8 @@ impl GutpCommentModule {
             .to_owned();
         let time = req
             .ext()
-            .get("time")
-            .ok_or(anyhow!("generate time failed"))?
+            .get("timestamp")
+            .ok_or(anyhow!("generate timestamp failed"))?
             .parse::<i64>()?;
 
         let comment = GutpComment {

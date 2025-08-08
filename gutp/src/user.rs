@@ -42,8 +42,8 @@ impl GutpUserModule {
 
         let sql = SqlBuilder::select_from(&GutpUser::model_name())
             .fields(&GutpUser::fields())
-            .and_where_eq("account", "$1")
-            .order_desc("created_time")
+            .and_where_eq(GutpUser::account(), "$1")
+            .order_desc(GutpUser::created_time())
             .limit(limit)
             .offset(offset)
             .sql()?;
@@ -80,8 +80,8 @@ impl GutpUserModule {
             .to_owned();
         let time = req
             .ext()
-            .get("time")
-            .ok_or(anyhow!("time is required"))?
+            .get("timestamp")
+            .ok_or(anyhow!("timestamp is required"))?
             .parse::<i64>()?;
 
         let user = GutpUser {

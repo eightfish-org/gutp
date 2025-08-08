@@ -124,8 +124,8 @@ impl GutpPostModule {
             .to_owned();
         let time = req
             .ext()
-            .get("time")
-            .ok_or(anyhow!("time is required"))?
+            .get("timestamp")
+            .ok_or(anyhow!("timestamp is required"))?
             .parse::<i64>()?;
 
         let post = GutpPost {
@@ -181,8 +181,8 @@ impl GutpPostModule {
             .parse::<bool>()?;
         let time = req
             .ext()
-            .get("time")
-            .ok_or(anyhow!("time is required"))?
+            .get("timestamp")
+            .ok_or(anyhow!("timestamp is required"))?
             .parse::<i64>()?;
 
         let ap = sql_query_one!(GutpPost, &id);
