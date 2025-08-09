@@ -3,8 +3,8 @@ use crate::{subspace, utils};
 use anyhow::{anyhow, bail};
 use eightfish_sdk::{EightFishModel, Module, Request, Response, Result, Router, StatusCode};
 use gutp_types::{
-    GutpPost, GutpPostStatus, GutpPostWeight, GutpSubspace, GutpSubspaceStatus, GutpSubspaceWeight,
-    GutpUser, GutpUserRole, GutpUserStatus,
+    GutpPost, GutpPostExt, GutpPostStatus, GutpPostWeight, GutpSubspace, GutpSubspaceStatus,
+    GutpSubspaceWeight, GutpUser, GutpUserRole, GutpUserStatus,
 };
 use serde_json::json;
 use spin_sdk::pg::ParameterValue;
@@ -57,13 +57,19 @@ impl GutpPostModule {
 
         let sql = SqlBuilder::select_from(&GutpPost::model_name())
             .fields(&GutpPost::fields())
+            .field(GutpUser::nickname())
+            .left()
+            .join(GutpUser::model_name())
+            .on_eq(GutpPost::author_id(), GutpUser::id())
             .and_where_eq(GutpPost::subspace_id(), "$1")
             .order_desc(GutpPost::created_time())
             .limit(limit)
             .offset(offset)
             .sql()?;
         let sql_params = vec![ParameterValue::Str(subspace_id.clone())];
-        let posts = sql_query!(GutpPost, &sql, &sql_params);
+        // let posts = sql_query!(GutpPost, &sql, &sql_params);
+        let posts = sql_query!(GutpPostExt, &sql, &sql_params);
+        println!("{:?}", posts);
 
         Ok(Response::new_check(posts))
     }

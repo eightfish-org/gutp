@@ -3,8 +3,9 @@ use crate::{subspace, utils};
 use anyhow::{anyhow, bail};
 use eightfish_sdk::{EightFishModel, Module, Request, Response, Result, Router, StatusCode};
 use gutp_types::{
-    GutpComment, GutpCommentStatus, GutpCommentWeight, GutpPost, GutpPostStatus, GutpPostWeight,
-    GutpSubspace, GutpSubspaceStatus, GutpSubspaceWeight, GutpUser, GutpUserRole, GutpUserStatus,
+    GutpComment, GutpCommentExt, GutpCommentStatus, GutpCommentWeight, GutpPost, GutpPostStatus,
+    GutpPostWeight, GutpSubspace, GutpSubspaceStatus, GutpSubspaceWeight, GutpUser, GutpUserRole,
+    GutpUserStatus,
 };
 use serde_json::json;
 use spin_sdk::pg::ParameterValue;
@@ -57,13 +58,17 @@ impl GutpCommentModule {
 
         let sql = SqlBuilder::select_from(&GutpComment::model_name())
             .fields(&GutpComment::fields())
+            .field(GutpUser::nickname())
+            .left()
+            .join(GutpUser::model_name())
+            .on_eq(GutpComment::author_id(), GutpUser::id())
             .and_where_eq(GutpComment::post_id(), "$1")
             .order_desc(GutpComment::created_time())
             .limit(limit)
             .offset(offset)
             .sql()?;
         let sql_params = vec![ParameterValue::Str(post_id.clone())];
-        let results = sql_query!(GutpComment, &sql, &sql_params);
+        let results = sql_query!(GutpCommentExt, &sql, &sql_params);
 
         Ok(Response::new_check(results))
     }

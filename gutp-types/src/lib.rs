@@ -1,4 +1,4 @@
-use eightfish_derive::EightFishModel;
+use eightfish_derive::{dtocore, EightFishDTO, EightFishModel};
 use eightfish_sdk::EightFishModel;
 use serde::{Deserialize, Serialize};
 use spin_sdk::pg::{DbValue, Decode, ParameterValue};
@@ -194,4 +194,20 @@ pub struct GutpExtObj {
     pub is_public: bool,             // BOOLEAN NOT NULL DEFAULT TRUE
     pub weight: i16,                 // SMALLINT NOT NULL
     pub created_time: i64,           // BIGINT NOT NULL
+}
+
+// ========= DTOs ===========
+
+#[derive(Debug, Serialize, Deserialize, Default, EightFishDTO)]
+pub struct GutpPostExt {
+    #[dtocore]
+    pub post: GutpPost,
+    pub author_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, EightFishDTO)]
+pub struct GutpCommentExt {
+    #[dtocore]
+    pub comment: GutpComment,
+    pub author_name: String,
 }
