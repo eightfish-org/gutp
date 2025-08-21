@@ -5,7 +5,7 @@ CREATE TABLE gutpuser (
     nickname VARCHAR NOT NULL,                      
     avatar VARCHAR NOT NULL,
     role SMALLINT NOT NULL CHECK (role IN (0, 1, 2, 3, 4, 5)),  -- role for simple permission system
-	status SMALLINT NOT NULL CHECK (status IN (0, 1, 2)),  -- 0: inactive, 1: active, 2: frozen
+	status SMALLINT NOT NULL CHECK (status IN (0, 1, 2, 3, 4)), 
     created_time BIGINT NOT NULL,
 	data_source VARCHAR NOT NULL
 );

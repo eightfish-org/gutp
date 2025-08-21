@@ -11,7 +11,7 @@ pub struct GutpUser {
     pub nickname: String,     // VARCHAR NOT NULL
     pub avatar: String,       // VARCHAR NOT NULL
     pub role: i16,            // SMALLINT NOT NULL CHECK (role IN (0, 1, 2, 3, 4, 5))
-    pub status: i16,          // SMALLINT NOT NULL CHECK (status IN (0, 1, 2))
+    pub status: i16,          // SMALLINT NOT NULL CHECK (status IN (0, 1, 2, 3, 4))
     pub created_time: i64,    // BIGINT NOT NULL
     pub data_source: String,  // VARCHAR NOT NULL
 }
@@ -23,12 +23,14 @@ pub enum GutpUserStatus {
     Frozen = 1,
     Forbidden = 2,
     Deleted = 3,
+    Inactive = 4,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum GutpUserRole {
     #[default]
     Normal = 0,
+    Admin = 5,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, EightFishModel)]
