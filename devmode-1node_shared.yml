@@ -4,7 +4,7 @@ services:
     image: miketang84/vintage:20250705
     restart: always
     ports:
-      - "8001:8001"
+      - "127.0.0.1:8001:8001"
     environment:
       - RUST_LOG=info
     command: vintage -c /vintage/config.yml
@@ -16,7 +16,7 @@ services:
     image: miketang84/dtomcat:20250814
     restart: always
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       - REDIS_HOST=cache_1:6379
       - DB_HOST=db_1:5432
@@ -45,7 +45,7 @@ services:
         max-size: 10m
         max-file: "3"
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     command:
       - "postgres"
       - "-c"
@@ -69,7 +69,7 @@ services:
     image: redis:6.2-alpine
     restart: always
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     command: redis-server --save "" --appendonly no --loglevel warning 
     #volumes: 
       # - cache:/data
